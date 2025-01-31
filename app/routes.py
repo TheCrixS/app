@@ -2,10 +2,19 @@ from flask import render_template, request, redirect, url_for, flash
 import pandas as pd
 import qrcode
 import os
+from datetime import datetime
 
 DATABASE_FILE = "BASE SOAT.xlsx"
 QR_FOLDER = "static/qr_codes"
 SHEET_NAME = "BASE"
+
+#Funcion para verificar si una fecha esta vencida
+def es_vencido(fecha_str):
+    try:
+        fecha = datetime.strptime(fecha_str, "%d/%m/%y")
+        return fecha <= datetime.today()
+    except ValueError:
+        return "Ingresar una Fecha con formato: DD/MM/AAAA" 
 
 def init_routes(app):
     @app.route('/')
@@ -27,12 +36,13 @@ def init_routes(app):
             soat = request.form['soat']
             tecnomecanica = request.form['tecnomecanica']
             observaciones = request.form['observaciones']
+            estado = "Activo" if not es_vencido(soat) and not es_vencido(tecnomecanica) else "Inactivo"
 
             # Cargar la base de datos
             try:
                 df = pd.read_excel(DATABASE_FILE, sheet_name=SHEET_NAME)
             except ValueError:
-                df = pd.DataFrame(columns=["CEDULA", "NOMBRES Y APELLIDOS", "EMPRESA", "TIPO DE TRANSPORTE", "PLACA", "NUMERO DE TARJETA DE PROPIEDAD", "CATEGORIA(S)", "FECHA DE VENCIMIENTO", "SOAT", "TECNOMECANICA", "OBSERVACIONES"])
+                df = pd.DataFrame(columns=["ESTADO","CEDULA", "NOMBRES Y APELLIDOS", "EMPRESA", "TIPO DE TRANSPORTE", "PLACA", "TARJETA DE PROPIEDAD", "CATEGORIA(S)", "FECHA DE VENCIMIENTO", "SOAT", "TECNOMECANICA", "OBSERVACIONES"])
 
             # Verificar si la cédula ya existe
             if cedula in df["CEDULA"].astype(str).values:
@@ -41,12 +51,13 @@ def init_routes(app):
 
             # Agregar nuevo usuario al DataFrame
             nuevo_usuario = pd.DataFrame([{
+                "ESTADO": estado,
                 "CEDULA": cedula,
                 "NOMBRES Y APELLIDOS": nombre,
                 "EMPRESA": empresa,
                 "TIPO DE TRANSPORTE": transporte,
                 "PLACA": placa,
-                "NUMERO DE TARJETA DE PROPIEDAD": tarjeta,
+                "TARJETA DE PROPIEDAD": tarjeta,
                 "CATEGORIA(S)": categoria,
                 "FECHA DE VENCIMIENTO": vencimiento,
                 "SOAT": soat,

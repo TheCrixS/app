@@ -1,6 +1,7 @@
 venv/
 .env
 .xlsx
+.png
 __pycache__/
 *.py[cod]
 
