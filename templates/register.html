@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registrar Usuario</title>
+</head>
+<body>
+    <h1>Registrar Usuario</h1>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <p class="{{ category }}">{{ message }}</p>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <form method="POST">
+        <label>Cédula:</label><input type="text" name="cedula" required><br>
+        <label>Nombre y Apellido:</label><input type="text" name="nombre" required><br>
+        <label>Empresa:</label><input type="text" name="empresa"><br>
+        <label>Tipo de Transporte:</label><input type="text" name="transporte"><br>
+        <label>Placa:</label><input type="text" name="placa" required><br>
+        <label>Número de Tarjeta:</label><input type="text" name="tarjeta"><br>
+        <label>Categoría:</label><input type="text" name="categoria"><br>
+        <label>Fecha de Vencimiento:</label><input type="date" name="vencimiento" required><br>
+        <label>SOAT:</label><input type="date" name="soat" required><br>
+        <label>Tecnomecánica:</label><input type="date" name="tecnomecanica" required><br>
+        <label>Observaciones:</label><input type="text" name="observaciones"><br>
+        <button type="submit">Registrar</button>
+    </form>
+
+    {% if qr_path %}
+        <h2>QR Generado:</h2>
+        <img src="{{ url_for('static', filename='qr_codes/' + qr_path.split('/')[-1]) }}" alt="QR Code">
+    {% endif %}
+</body>
+</html>
