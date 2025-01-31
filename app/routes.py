@@ -8,13 +8,16 @@ DATABASE_FILE = "BASE SOAT.xlsx"
 QR_FOLDER = "static/qr_codes"
 SHEET_NAME = "BASE"
 
-#Funcion para verificar si una fecha esta vencida
-def es_vencido(fecha_str):
+def calcular_estado(soat, tecnomecanica):
+    """Determina si el estado es 'Activo' o 'Inactivo' según las fechas del SOAT y la tecnomecánica."""
     try:
-        fecha = datetime.strptime(fecha_str, "%d/%m/%y")
-        return fecha <= datetime.today()
+        fecha_actual = datetime.today().date()
+        soat_vencimiento = datetime.strptime(soat, "%d/%m/%Y").date()
+        tecnomecanica_vencimiento = datetime.strptime(tecnomecanica, "%d/%m/%Y").date()
+
+        return "Activo" if soat_vencimiento >= fecha_actual and tecnomecanica_vencimiento >= fecha_actual else "Inactivo"
     except ValueError:
-        return "Ingresar una Fecha con formato: DD/MM/AAAA" 
+        return "Inactivo"  # Si hay un error con la fecha, se marca como "Inactivo"
 
 def init_routes(app):
     @app.route('/')
@@ -36,7 +39,6 @@ def init_routes(app):
             soat = request.form['soat']
             tecnomecanica = request.form['tecnomecanica']
             observaciones = request.form['observaciones']
-            estado = "Activo" if not es_vencido(soat) and not es_vencido(tecnomecanica) else "Inactivo"
 
             # Cargar la base de datos
             try:
@@ -48,6 +50,9 @@ def init_routes(app):
             if cedula in df["CEDULA"].astype(str).values:
                 flash("Error: La cédula ya está registrada.", "danger")
                 return redirect(url_for('registrar'))
+
+            # Calcular el estado basado en el SOAT y la tecnomecánica
+            estado = calcular_estado(soat, tecnomecanica)
 
             # Agregar nuevo usuario al DataFrame
             nuevo_usuario = pd.DataFrame([{
