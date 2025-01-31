@@ -3,21 +3,15 @@ import pandas as pd
 import qrcode
 import os
 
-DATABASE_FILE = "database.xlsx"
+DATABASE_FILE = "BASE SOAT.xlsx"
 QR_FOLDER = "static/qr_codes"
-
-# Crear archivo Excel si no existe
-if not os.path.exists(DATABASE_FILE):
-    df = pd.DataFrame(columns=["CEDULA", "NOMBRES Y APELLIDOS", "EMPRESA", "TIPO DE TRANSPORTE", "PLACA", "NUMERO DE TARJETA DE PROPIEDAD", "CATEGORIA(S)", "FECHA DE VENCIMIENTO", "SOAT", "TECNOMECANICA", "OBSERVACIONES"])
-    df.to_excel(DATABASE_FILE, index=False)
+SHEET_NAME = "BASE"
 
 def init_routes(app):
-    # Ruta principal con el menú
     @app.route('/')
     def index():
         return render_template('index.html')
 
-    # Página para registrar usuarios
     @app.route('/registrar', methods=['GET', 'POST'])
     def registrar():
         if request.method == 'POST':
@@ -34,8 +28,11 @@ def init_routes(app):
             tecnomecanica = request.form['tecnomecanica']
             observaciones = request.form['observaciones']
 
-            # Cargar el archivo Excel
-            df = pd.read_excel(DATABASE_FILE)
+            # Cargar la base de datos
+            try:
+                df = pd.read_excel(DATABASE_FILE, sheet_name=SHEET_NAME)
+            except ValueError:
+                df = pd.DataFrame(columns=["CEDULA", "NOMBRES Y APELLIDOS", "EMPRESA", "TIPO DE TRANSPORTE", "PLACA", "NUMERO DE TARJETA DE PROPIEDAD", "CATEGORIA(S)", "FECHA DE VENCIMIENTO", "SOAT", "TECNOMECANICA", "OBSERVACIONES"])
 
             # Verificar si la cédula ya existe
             if cedula in df["CEDULA"].astype(str).values:
@@ -58,8 +55,9 @@ def init_routes(app):
             }])
             df = pd.concat([df, nuevo_usuario], ignore_index=True)
 
-            # Guardar en el archivo Excel
-            df.to_excel(DATABASE_FILE, index=False)
+            # Guardar en el archivo Excel en la hoja "BASE"
+            with pd.ExcelWriter(DATABASE_FILE, engine="openpyxl", mode="w") as writer:
+                df.to_excel(writer, sheet_name=SHEET_NAME, index=False)
 
             # Generar código QR
             qr_data = f"Nombre: {nombre}\nCédula: {cedula}\nPlaca: {placa}"
