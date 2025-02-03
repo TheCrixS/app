@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Validar QR</title>
+    <script src="https://unpkg.com/html5-qrcode/minified/html5-qrcode.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+</head>
+<body>
+    <h2>Escanear Código QR</h2>
+    
+    <div id="qr-reader" style="width: 300px;"></div>
+    <p id="result">Esperando escaneo...</p>
+
+    <script>
+        function onScanSuccess(decodedText) {
+            console.log("Código QR detectado:", decodedText);
+            document.getElementById("result").innerText = "Código escaneado: " + decodedText;
+            
+            fetch('/procesar_qr', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ qr_data: decodedText })
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById("result").innerText = data.message;
+            })
+            .catch(error => console.error("Error:", error));
+        }
+
+        function onScanError(errorMessage) {
+            console.warn(`Error de escaneo: ${errorMessage}`);
+        }
+
+        function iniciarEscaner() {
+            let qrScanner = new Html5Qrcode("qr-reader");
+
+            Html5Qrcode.getCameras().then(devices => {
+                if (devices.length > 0) {
+                    let cameraId = devices[0].id;
+                    qrScanner.start(
+                        cameraId, 
+                        { fps: 10, qrbox: 250 },
+                        onScanSuccess,
+                        onScanError
+                    );
+                } else {
+                    document.getElementById("result").innerText = "No se encontraron cámaras.";
+                }
+            }).catch(error => {
+                console.error("Error al acceder a la cámara:", error);
+                document.getElementById("result").innerText = "No se pudo acceder a la cámara.";
+            });
+        }
+
+        // Esperar que la página cargue antes de iniciar el escáner
+        window.onload = iniciarEscaner;
+    </script>
+</body>
+</html>

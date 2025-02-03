@@ -1,8 +1,11 @@
-from flask import render_template, request, redirect, url_for, flash
+from flask import render_template, request, redirect, url_for, flash, jsonify
 import pandas as pd
 import qrcode
 import os
 from datetime import datetime
+import cv2
+import numpy as np
+from pyzbar.pyzbar import decode
 
 DATABASE_FILE = "BASE SOAT.xlsx"
 QR_FOLDER = "static/qr_codes"
@@ -14,7 +17,6 @@ def calcular_estado(soat, tecnomecanica):
         fecha_actual = datetime.today().date()
         soat_vencimiento = datetime.strptime(soat, "%d/%m/%Y").date()
         tecnomecanica_vencimiento = datetime.strptime(tecnomecanica, "%d/%m/%Y").date()
-
         return "Activo" if soat_vencimiento >= fecha_actual and tecnomecanica_vencimiento >= fecha_actual else "Inactivo"
     except ValueError:
         return "Inactivo"  # Si hay un error con la fecha, se marca como "Inactivo"
@@ -44,7 +46,8 @@ def init_routes(app):
             try:
                 df = pd.read_excel(DATABASE_FILE, sheet_name=SHEET_NAME)
             except ValueError:
-                df = pd.DataFrame(columns=["ESTADO","CEDULA", "NOMBRES Y APELLIDOS", "EMPRESA", "TIPO DE TRANSPORTE", "PLACA", "TARJETA DE PROPIEDAD", "CATEGORIA(S)", "FECHA DE VENCIMIENTO", "SOAT", "TECNOMECANICA", "OBSERVACIONES"])
+                df = pd.DataFrame(columns=["ESTADO", "CEDULA", "NOMBRES Y APELLIDOS", "EMPRESA", "TIPO DE TRANSPORTE", "PLACA",
+                                           "TARJETA DE PROPIEDAD", "CATEGORIA(S)", "FECHA DE VENCIMIENTO", "SOAT", "TECNOMECANICA", "OBSERVACIONES"])
 
             # Verificar si la cédula ya existe
             if cedula in df["CEDULA"].astype(str).values:
@@ -85,3 +88,63 @@ def init_routes(app):
             return render_template('register.html', qr_path=qr_path)
 
         return render_template('register.html', qr_path=None)
+
+    @app.route('/validar_qr')
+    def validar_qr():
+        """Página para escanear y validar códigos QR."""
+        return render_template('validar_qr.html')
+
+    @app.route('/procesar_qr', methods=['POST'])
+    def procesar_qr():
+        """Procesa el QR recibido y valida el estado en la base de datos."""
+        try:
+            data = request.get_json()
+            qr_data = data.get("qr_data")
+
+            if not qr_data:
+                return jsonify({"message": "No se recibió código QR."})
+
+            # Extraer la cédula del QR
+            lines = qr_data.split("\n")
+            cedula = None
+            for line in lines:
+                if "Cédula:" in line:
+                    cedula = line.split(": ")[1].strip()
+                    break
+
+            if not cedula:
+                return jsonify({"message": "No se encontró la cédula en el QR."})
+
+            # Buscar en la base de datos
+            df = pd.read_excel(DATABASE_FILE, sheet_name=SHEET_NAME, dtype=str)
+            usuario = df[df["CEDULA"] == cedula]
+
+            if usuario.empty:
+                return jsonify({"message": "Usuario no encontrado."})
+
+            estado = usuario["ESTADO"].values[0]
+
+            if estado == "Activo":
+                return jsonify({
+                    "message": "✅ Acceso permitido",
+                    "data": {
+                        "Cédula": cedula,
+                        "Nombre": usuario["NOMBRES Y APELLIDOS"].values[0],
+                        "Placa": usuario["PLACA"].values[0],
+                        "Estado": estado
+                    }
+                })
+            else:
+                return jsonify({
+                    "message": "❌ Acceso denegado",
+                    "data": {
+                        "Cédula": cedula,
+                        "Nombre": usuario["NOMBRES Y APELLIDOS"].values[0],
+                        "Placa": usuario["PLACA"].values[0],
+                        "Estado": estado
+                    }
+                })
+
+        except Exception as e:
+            return jsonify({"message": f"Error: {str(e)}"})
+
