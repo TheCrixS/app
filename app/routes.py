@@ -21,6 +21,16 @@ def calcular_estado(soat, tecnomecanica):
     except ValueError:
         return "Inactivo"  # Si hay un error con la fecha, se marca como "Inactivo"
 
+def obtener_nuevo_id(df):
+    """Genera un ID auto-incrementable, comenzando desde 8000000."""
+    if "ID" in df.columns and not df.empty:
+        try:
+            max_id = df["ID"].dropna().astype(int).max()
+            return max(max_id + 1, 8000000)  # Asegura que el primer ID sea 8000000
+        except:
+            return 8000000
+    return 8000000
+
 def init_routes(app):
     @app.route('/')
     def index():
@@ -44,21 +54,27 @@ def init_routes(app):
 
             # Cargar la base de datos
             try:
-                df = pd.read_excel(DATABASE_FILE, sheet_name=SHEET_NAME)
-            except ValueError:
-                df = pd.DataFrame(columns=["ESTADO", "CEDULA", "NOMBRES Y APELLIDOS", "EMPRESA", "TIPO DE TRANSPORTE", "PLACA",
-                                           "TARJETA DE PROPIEDAD", "CATEGORIA(S)", "FECHA DE VENCIMIENTO", "SOAT", "TECNOMECANICA", "OBSERVACIONES"])
+                df = pd.read_excel(DATABASE_FILE, sheet_name=SHEET_NAME, dtype=str)
+            except (FileNotFoundError, ValueError):
+                df = pd.DataFrame(columns=["ID", "ESTADO", "CEDULA", "NOMBRES Y APELLIDOS", "EMPRESA", 
+                                           "TIPO DE TRANSPORTE", "PLACA", "TARJETA DE PROPIEDAD", 
+                                           "CATEGORIA(S)", "FECHA DE VENCIMIENTO", "SOAT", 
+                                           "TECNOMECANICA", "OBSERVACIONES"])
 
             # Verificar si la cédula ya existe
             if cedula in df["CEDULA"].astype(str).values:
                 flash("Error: La cédula ya está registrada.", "danger")
                 return redirect(url_for('registrar'))
 
+            # Generar un nuevo ID
+            nuevo_id = obtener_nuevo_id(df)
+
             # Calcular el estado basado en el SOAT y la tecnomecánica
             estado = calcular_estado(soat, tecnomecanica)
 
             # Agregar nuevo usuario al DataFrame
             nuevo_usuario = pd.DataFrame([{
+                "ID": nuevo_id,
                 "ESTADO": estado,
                 "CEDULA": cedula,
                 "NOMBRES Y APELLIDOS": nombre,
@@ -78,10 +94,10 @@ def init_routes(app):
             with pd.ExcelWriter(DATABASE_FILE, engine="openpyxl", mode="w") as writer:
                 df.to_excel(writer, sheet_name=SHEET_NAME, index=False)
 
-            # Generar código QR
-            qr_data = f"Nombre: {nombre}\nCédula: {cedula}\nPlaca: {placa}"
+            # Generar código QR con ID
+            qr_data = f"ID: {nuevo_id}"
             qr = qrcode.make(qr_data)
-            qr_path = os.path.join(QR_FOLDER, f"{cedula}.png")
+            qr_path = os.path.join(QR_FOLDER, f"{nuevo_id}.png")
             qr.save(qr_path)
 
             flash("Usuario registrado con éxito.", "success")
@@ -104,20 +120,20 @@ def init_routes(app):
             if not qr_data:
                 return jsonify({"message": "No se recibió código QR."})
 
-            # Extraer la cédula del QR
+            # Extraer el ID del QR
             lines = qr_data.split("\n")
-            cedula = None
+            id_usuario = None
             for line in lines:
-                if "Cédula:" in line:
-                    cedula = line.split(": ")[1].strip()
+                if "ID:" in line:
+                    id_usuario = line.split(": ")[1].strip()
                     break
 
-            if not cedula:
-                return jsonify({"message": "No se encontró la cédula en el QR."})
+            if not id_usuario:
+                return jsonify({"message": "No se encontró el ID en el QR."})
 
             # Buscar en la base de datos
             df = pd.read_excel(DATABASE_FILE, sheet_name=SHEET_NAME, dtype=str)
-            usuario = df[df["CEDULA"] == cedula]
+            usuario = df[df["ID"] == id_usuario]
 
             if usuario.empty:
                 return jsonify({"message": "Usuario no encontrado."})
@@ -128,7 +144,8 @@ def init_routes(app):
                 return jsonify({
                     "message": "✅ Acceso permitido",
                     "data": {
-                        "Cédula": cedula,
+                        "ID": id_usuario,
+                        "Cédula": usuario["CEDULA"].values[0],
                         "Nombre": usuario["NOMBRES Y APELLIDOS"].values[0],
                         "Placa": usuario["PLACA"].values[0],
                         "Estado": estado
@@ -138,7 +155,8 @@ def init_routes(app):
                 return jsonify({
                     "message": "❌ Acceso denegado",
                     "data": {
-                        "Cédula": cedula,
+                        "ID": id_usuario,
+                        "Cédula": usuario["CEDULA"].values[0],
                         "Nombre": usuario["NOMBRES Y APELLIDOS"].values[0],
                         "Placa": usuario["PLACA"].values[0],
                         "Estado": estado
@@ -147,4 +165,3 @@ def init_routes(app):
 
         except Exception as e:
             return jsonify({"message": f"Error: {str(e)}"})
-

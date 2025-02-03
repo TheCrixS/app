@@ -1,19 +1,149 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Validar QR</title>
+    <meta name="description" content="Validación de QR - TS3+">
+    <meta name="author" content="TS3+">
+    <meta name="keywords" content="TS3+, QR, validación, acceso">
+    <link rel="icon" href="favicon.ico" type="image/x-icon">
+    <title>Validar QR - TS3+</title>
     <script src="https://unpkg.com/html5-qrcode/minified/html5-qrcode.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+
+    <!-- Estilos -->
+    <style>
+        :root {
+            --primary-color: #071C23;
+            --secondary-color: #FF914D;
+            --success-bg: rgba(0, 128, 0, 0.3);
+            --error-bg: rgba(255, 0, 0, 0.3);
+            --background-color: #F9F9F9;
+            --text-color: #333;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: url('../static/palma.jpg') no-repeat center center fixed;
+            background-size: cover;
+            color: var(--text-color);
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            transition: background-color 0.5s ease;
+        }
+
+        header {
+            background-color: rgba(7, 28, 35, 0.9);
+            color: white;
+            padding: 1rem;
+            text-align: center;
+            box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+            position: relative;
+        }
+
+        .back-button {
+            position: absolute;
+            top: 50%;
+            left: 1rem;
+            transform: translateY(-50%);
+            color: white;
+            background-color: var(--primary-color);
+            padding: 0.8rem 1.5rem;
+            text-decoration: none;
+            border-radius: 5px;
+            font-size: 1rem;
+            transition: background-color 0.3s ease;
+        }
+
+        .back-button:hover {
+            background-color: #064b68;
+        }
+
+        main {
+            display: flex;
+            gap: 2rem;
+            flex: 1;
+            padding: 2rem;
+            backdrop-filter: blur(5px);
+            background-color: rgba(255, 255, 255, 0.8);
+            margin: 2rem auto;
+            max-width: 1200px;
+            border-radius: 10px;
+            box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.2);
+        }
+
+        .result-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 2rem;
+            border-radius: 10px;
+            text-align: center;
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+
+        .qr-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background-color: rgba(7, 28, 35, 0.9);
+            color: white;
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.2);
+            width: 50%;
+        }
+
+        #qr-reader {
+            width: 100%;
+            max-width: 400px;
+            height: auto;
+        }
+
+        footer {
+            background-color: rgba(7, 28, 35, 0.9);
+            color: white;
+            text-align: center;
+            padding: 1rem;
+        }
+    </style>
 </head>
+
 <body>
-    <h2>Escanear Código QR</h2>
-    
-    <div id="qr-reader" style="width: 300px;"></div>
-    <p id="result">Esperando escaneo...</p>
+    <header>
+        <h1>Validar QR - TS3+</h1>
+        <a class="back-button" href="{{ url_for('index') }}">Volver al Menú Principal</a>
+    </header>
+
+    <main>
+        <div class="result-container" id="result-container">
+            <p id="result">Esperando escaneo...</p>
+        </div>
+
+        <div class="qr-container">
+            <h2>Escanear Código QR</h2>
+            <div id="qr-reader"></div>
+            <button id="cambiarCamara">Cambiar Cámara</button>
+        </div>
+    </main>
+
+    <footer>
+        <p>&copy; 2025 TS3+. Todos los derechos reservados.</p>
+    </footer>
 
     <script>
+        let qrScanner;
+        let dispositivos = [];
+        let dispositivoActual = 0;
+
         function onScanSuccess(decodedText) {
             console.log("Código QR detectado:", decodedText);
             document.getElementById("result").innerText = "Código escaneado: " + decodedText;
@@ -26,37 +156,35 @@
             .then(response => response.json())
             .then(data => {
                 document.getElementById("result").innerText = data.message;
+                document.body.style.backgroundColor = data.status === 'permitido' ? 'var(--success-bg)' : 'var(--error-bg)';
             })
             .catch(error => console.error("Error:", error));
         }
 
-        function onScanError(errorMessage) {
-            console.warn(`Error de escaneo: ${errorMessage}`);
+        async function iniciarEscaner() {
+            dispositivos = await Html5Qrcode.getCameras();
+            if (dispositivos.length === 0) {
+                document.getElementById("result").innerText = "No se encontraron cámaras.";
+                return;
+            }
+            const cameraId = dispositivos[dispositivoActual].id;
+            qrScanner = new Html5Qrcode("qr-reader");
+            qrScanner.start(cameraId, { fps: 10, qrbox: 300 }, onScanSuccess);
         }
 
-        function iniciarEscaner() {
-            let qrScanner = new Html5Qrcode("qr-reader");
-
-            Html5Qrcode.getCameras().then(devices => {
-                if (devices.length > 0) {
-                    let cameraId = devices[0].id;
-                    qrScanner.start(
-                        cameraId, 
-                        { fps: 10, qrbox: 250 },
-                        onScanSuccess,
-                        onScanError
-                    );
-                } else {
-                    document.getElementById("result").innerText = "No se encontraron cámaras.";
-                }
-            }).catch(error => {
-                console.error("Error al acceder a la cámara:", error);
-                document.getElementById("result").innerText = "No se pudo acceder a la cámara.";
-            });
+        async function cambiarCamara() {
+            if (dispositivos.length < 2) {
+                alert('No hay suficientes cámaras disponibles.');
+                return;
+            }
+            await qrScanner.stop();
+            dispositivoActual = (dispositivoActual + 1) % dispositivos.length;
+            iniciarEscaner();
         }
 
-        // Esperar que la página cargue antes de iniciar el escáner
+        document.getElementById("cambiarCamara").addEventListener("click", cambiarCamara);
         window.onload = iniciarEscaner;
     </script>
 </body>
+
 </html>

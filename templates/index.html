@@ -1,16 +1,124 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Menú Principal</title>
+    <meta name="description" content="Página oficial de TS3+">
+    <meta name="author" content="TS3+">
+    <meta name="keywords" content="TS3+, tecnología, servicios, innovación">
+    <link rel="icon" href="favicon.ico" type="image/x-icon">
+    <title>Menú Principal - TS3+</title>
+    <link rel="icon" href="../static/logo-ts3.png" type="image/x-icon">
+
+    <!-- Estilo principal -->
+    <style>
+        :root {
+            --primary-color: #071C23; /* Azul oscuro del logo */
+            --secondary-color: #FF914D; /* Tono naranja */
+            --accent-color: #6C63FF; /* Detalles morados */
+            --background-color: #F9F9F9; /* Fondo claro */
+            --text-color: #333333; /* Texto general */
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: url('../static/palma.jpg') no-repeat center center fixed;
+            background-size: cover;
+            color: var(--text-color);
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        header {
+            background-color: rgba(7, 28, 35, 0.9); /* Semi-transparente */
+            color: white;
+            padding: 1rem;
+            text-align: center;
+            box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        main {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            flex: 1;
+            backdrop-filter: blur(5px);
+            background-color: rgba(255, 255, 255, 0.8);
+            margin: 2rem auto;
+            padding: 2rem;
+            max-width: 800px;
+            border-radius: 10px;
+            box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.2);
+        }
+
+        main h2 {
+            color: var(--primary-color);
+            font-size: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .options {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 2rem;
+            justify-content: center;
+        }
+
+        .option {
+            background-color: var(--secondary-color);
+            color: white;
+            font-size: 1.5rem;
+            font-weight: bold;
+            text-align: center;
+            text-decoration: none;
+            padding: 1.5rem 2rem;
+            border-radius: 10px;
+            box-shadow: 0px 6px 10px rgba(0, 0, 0, 0.15);
+            transition: transform 0.3s ease, background-color 0.3s ease;
+            width: 250px;
+        }
+
+        .option:hover {
+            background-color: #ff7c2b;
+            transform: scale(1.1);
+        }
+
+        footer {
+            background-color: rgba(7, 28, 35, 0.9); /* Semi-transparente */
+            color: white;
+            text-align: center;
+            padding: 1rem;
+            margin-top: auto;
+        }
+
+        .legal {
+            font-size: 0.8rem;
+        }
+    </style>
 </head>
+
 <body>
-    <h1>Menú Principal</h1>
-    <ul>
-        <li><a href="{{ url_for('registrar') }}">Registrar Usuario</a></li>
-        <li><a href="#">Modificar Usuario</a></li>
-        <li><a href="{{ url_for('validar_qr') }}">Ingreso de Vehículo</a></li>
-    </ul>
+    <header>
+        <h1>Menú Principal - TS3+</h1>
+    </header>
+
+    <main>
+        <h2>Elige una opción</h2>
+        <div class="options">
+            <a class="option" href="{{ url_for('registrar') }}">Registrar Usuario</a>
+            <a class="option" href="#">Modificar Usuario</a>
+            <a class="option" href="{{ url_for('validar_qr') }}">Ingreso de Vehículo</a>
+        </div>
+    </main>
+
+    <footer>
+        <p>&copy; 2025 TS3+. Todos los derechos reservados.</p>
+        <p class="legal">Esta página cumple con las normativas actuales de protección de datos y accesibilidad. Para más información, consulta nuestra <a href="#" style="color: var(--secondary-color);">política de privacidad</a>.</p>
+    </footer>
 </body>
+
 </html>
