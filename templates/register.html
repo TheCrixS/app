@@ -2,254 +2,387 @@
 <html lang="es">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Página oficial de TS3+">
-    <meta name="author" content="TS3+">
-    <meta name="keywords" content="TS3+, tecnología, servicios, innovación">
-    <link rel="icon" href="favicon.ico" type="image/x-icon">
-    <title>Registrar Usuario - TS3+</title>
-    <link rel="icon" href="../static/logo-ts3.png" type="image/x-icon">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Página oficial de TS3+">
+  <meta name="author" content="TS3+">
+  <meta name="keywords" content="TS3+, tecnología, servicios, innovación">
+  <link rel="icon" href="favicon.ico" type="image/x-icon">
+  <title>Registrar Usuario</title>
+  <link rel="icon" href="{{ url_for('static', filename='logo-ts3.png') }}" type="image/x-icon">
 
-    <!-- Estilo principal -->
-    <style>
-        :root {
-            --primary-color: #071C23; /* Azul oscuro del logo */
-            --secondary-color: #FF914D; /* Tono naranja */
-            --accent-color: #6C63FF; /* Detalles morados */
-            --background-color: #F9F9F9; /* Fondo claro */
-            --text-color: #333333; /* Texto general */
-        }
+  <!-- Estilo principal -->
+  <style>
+    :root {
+      --primary-color: #071C23;
+      --secondary-color: #FF914D;
+      --accent-color: #6C63FF;
+      --background-color: #F9F9F9;
+      --text-color: #333333;
+    }
 
-        body {
-            margin: 0;
-            font-family: Arial, sans-serif;
-            background: url('../static/palma.jpg') no-repeat center center fixed;
-            background-size: cover;
-            color: var(--text-color);
-            display: flex;
-            flex-direction: column;
-            min-height: 100vh;
-        }
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: url('../static/palma.jpg') no-repeat center center fixed;
+      background-size: cover;
+      color: var(--text-color);
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
 
-        header {
-            background-color: rgba(7, 28, 35, 0.9); /* Semi-transparente */
-            color: white;
-            padding: 1rem;
-            text-align: center;
-            box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
-            position: relative;
-        }
+    header {
+      background-color: rgba(7, 28, 35, 0.9);
+      color: white;
+      padding: 1rem;
+      text-align: center;
+      box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+      position: relative;
+    }
 
-        .back-button {
-            position: absolute;
-            top: 50%;
-            left: 1rem;
-            transform: translateY(-50%);
-            color: white;
-            background-color: var(--primary-color);
-            padding: 0.8rem 1.5rem;
-            text-decoration: none;
-            border-radius: 5px;
-            font-size: 1rem;
-            transition: background-color 0.3s ease;
-        }
+    .back-button {
+      position: absolute;
+      top: 50%;
+      left: 1rem;
+      transform: translateY(-50%);
+      color: white;
+      background-color: var(--primary-color);
+      padding: 0.8rem 1.5rem;
+      text-decoration: none;
+      border-radius: 5px;
+      font-size: 1rem;
+      transition: background-color 0.3s ease;
+    }
 
-        .back-button:hover {
-            background-color: #064b68;
-        }
+    .back-button:hover {
+      background-color: #064b68;
+    }
 
-        main {
-            display: flex;
-            gap: 2rem;
-            flex: 1;
-            padding: 2rem;
-            backdrop-filter: blur(5px);
-            background-color: rgba(255, 255, 255, 0.8);
-            margin: 2rem auto;
-            max-width: 1200px;
-            border-radius: 10px;
-            box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.2);
-        }
+    main {
+      display: flex;
+      gap: 2rem;
+      flex: 1;
+      padding: 2rem;
+      backdrop-filter: blur(5px);
+      background-color: rgba(255, 255, 255, 0.8);
+      margin: 2rem auto;
+      max-width: 1200px;
+      border-radius: 10px;
+      box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.2);
+    }
 
-        .form-container {
-            flex: 2;
-            display: flex;
-            flex-direction: column;
-            gap: 1rem;
-        }
+    .form-container {
+      flex: 2;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
 
-        .form-container form {
-            display: grid;
-            grid-template-columns: 1fr 2fr;
-            gap: 1rem;
-        }
+    .form-container form {
+      display: grid;
+      grid-template-columns: 1fr 2fr;
+      gap: 1rem;
+    }
 
-        .form-container form label {
-            text-align: right;
-            padding-right: 1rem;
-        }
+    .form-container form label {
+      text-align: right;
+      padding-right: 1rem;
+    }
 
-        .form-container form input,
-        .form-container form textarea,
-        .form-container form button {
-            padding: 0.8rem;
-            font-size: 1rem;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-        }
+    .form-container form input,
+    .form-container form textarea,
+    .form-container form button {
+      padding: 0.8rem;
+      font-size: 1rem;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
 
-        .form-container form button {
-            grid-column: 2 / 3;
-            background-color: var(--secondary-color);
-            color: white;
-            border: none;
-            cursor: pointer;
-            transition: background-color 0.3s ease;
-        }
+    .form-container form button {
+      grid-column: 2 / 3;
+      background-color: var(--secondary-color);
+      color: white;
+      border: none;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
 
-        .form-container form button:hover {
-            background-color: #e87c35;
-        }
+    .form-container form button:hover {
+      background-color: #e87c35;
+    }
 
-        .qr-container {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            background-color: rgba(7, 28, 35, 0.9);
-            color: white;
-            padding: 2rem;
-            border-radius: 10px;
-            box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.2);
-        }
+    /* Estilos para el Modal de confirmación */
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 1000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.5);
+      align-items: center;
+      justify-content: center;
+    }
 
-        .qr-container.hidden {
-            display: none;
-        }
+    .modal-content {
+      background-color: #fff;
+      padding: 20px;
+      border: 1px solid #888;
+      border-radius: 10px;
+      text-align: center;
+      position: relative;
+      width: 80%;
+      max-width: 500px;
+      display: flex;
+      flex-direction: column;
+      align-items: center; /* Centra el contenido del modal */
+      justify-content: center;
+    }
 
-        .qr-container h2 {
-            margin-bottom: 1rem;
-        }
+    .close-button {
+      position: absolute;
+      top: 10px;
+      right: 20px;
+      font-size: 24px;
+      font-weight: bold;
+      cursor: pointer;
+    }
 
-        .qr-container img {
-            max-width: 100%;
-            height: auto;
-            margin-bottom: 1rem;
-            border: 2px solid white;
-            border-radius: 10px;
-        }
+    .modal-content img {
+        width: 300px; /* Ajusta el tamaño del QR */
+        height: auto;
+        margin: 1rem auto; /* Centra la imagen horizontalmente */
+        display: block;
+        border: 2px solid #ccc;
+        border-radius: 10px;
+    }
 
-        .qr-container a {
-            margin: 0.5rem;
-            color: white;
-            background-color: var(--accent-color);
-            padding: 0.8rem 1.5rem;
-            text-decoration: none;
-            border-radius: 5px;
-            font-size: 1rem;
-            transition: background-color 0.3s ease;
-        }
+    .modal-buttons {
+        display: flex;
+        justify-content: center; /* Centra los botones */
+        gap: 10px; /* Espaciado entre botones */
+        width: 100%;
+    }
 
-        .qr-container a:hover {
-            background-color: #5643d6;
-        }
+    .modal-buttons a {
+        padding: 0.8rem 1.5rem;
+        color: white;
+        background-color: var(--accent-color);
+        text-decoration: none;
+        text-align: center;
+        border-radius: 5px;
+        font-size: 1rem;
+        transition: background-color 0.3s ease;
+        flex-grow: 1; /* Hace que los botones se alineen uniformemente */
+        max-width: 120px; /* Limita el tamaño de los botones */
+    }
 
-        footer {
-            background-color: rgba(7, 28, 35, 0.9); /* Semi-transparente */
-            color: white;
-            text-align: center;
-            padding: 1rem;
-        }
+    .modal-buttons a:hover {
+      background-color: #5643d6;
+    }
 
-        .legal {
-            font-size: 0.8rem;
-        }
-    </style>
+    footer {
+      background-color: rgba(7, 28, 35, 0.9);
+      color: white;
+      text-align: center;
+      padding: 1rem;
+    }
+
+    .legal {
+      font-size: 0.8rem;
+    }
+  </style>
 </head>
 
 <body>
-    <header>
-        <h1>Registro de Usuario - TS3+</h1>
-        <a class="back-button" href="{{ url_for('index') }}">Volver al Menú Principal</a>
-    </header>
+  <header>
+    <h1><img src="../static/logo-ts3.png" alt="TS3+ Logo" class="header-logo"></h1>
+    <a class="back-button" href="{{ url_for('index') }}">Volver al Menú Principal</a>
+  </header>
 
-    <main>
-        <div class="form-container">
-            <form action="{{ url_for('registrar') }}" method="post" onsubmit="showQR(); formatDates(event)">
-                <label for="cedula">Cédula:</label>
-                <input type="text" name="cedula" required>
+  <main>
+    <div class="form-container">
+      <!-- Al enviar el formulario se llama a la función showModal() y se evita el envío real (return false) para efectos de demostración -->
+      <form action="{{ url_for('registrar') }}" method="post" onsubmit="return mostrarModal(event);">
+        <label for="cedula">Cédula:</label>
+        <input type="text" name="cedula" required>
+    
+        <label for="nombre">Nombres y Apellidos:</label>
+        <input type="text" name="nombre" required>
+    
+        <label for="empresa">Empresa:</label>
+        <input type="text" name="empresa">
+    
+        <label for="transporte">Tipo de Transporte:</label>
+        <input type="text" name="transporte">
+    
+        <label for="placa">Placa:</label>
+        <input type="text" name="placa" required>
 
-                <label for="nombre">Nombres y Apellidos:</label>
-                <input type="text" name="nombre" required>
+        <label for="tarjeta">Número de Tarjeta de Propiedad:</label>
+        <input type="text" name="tarjeta">
 
-                <label for="empresa">Empresa:</label>
-                <input type="text" name="empresa">
+        <label for="categoria">Categoría(s):</label>
+        <input type="text" name="categoria">
+    
+        <label for="vencimiento">Fecha de Vencimiento:</label>
+        <input type="date" name="vencimiento" required>
+    
+        <label for="soat">SOAT:</label>
+        <input type="date" name="soat" required>
+    
+        <label for="tecnomecanica">Tecnomecánica:</label>
+        <input type="date" name="tecnomecanica" required>
+    
+        <label for="observaciones">Observaciones:</label>
+        <textarea name="observaciones"></textarea>
+    
+        <button type="submit">Registrar</button>
+    </form>
+    
+    </div>
+  </main>
 
-                <label for="transporte">Tipo de Transporte:</label>
-                <input type="text" name="transporte">
+<!-- Modal de confirmación con QR -->
+<div id="modalQR" class="modal">
+    <div class="modal-content">
+      <span class="close-button" onclick="cerrarModal()">×</span>
+      <h2>Usuario Registrado</h2>
+      <p>El registro ha sido exitoso. Aquí está el código QR:</p>
+      <!-- El src se actualiza dinámicamente con JavaScript -->
+      <img id="qrImage" src="" alt="Código QR">
+      <div class="modal-buttons">
+        <!-- El href se actualiza dinámicamente con JavaScript -->
+        <a id="downloadQR" href="" download="codigo_qr.png">Descargar</a>
+        <a href="#" onclick="imprimirQR(); return false;">Imprimir</a>
+      </div>
+    </div>
+  </div>
+  
 
-                <label for="placa">Placa:</label>
-                <input type="text" name="placa" required>
+  <footer>
+    <p>&copy; 2025 TS3+. Todos los derechos reservados.</p>
+    <p class="legal">Esta página cumple con las normativas actuales de protección de datos y accesibilidad. Para más información, consulta nuestra <a href="#" style="color: var(--secondary-color);">política de privacidad</a>.</p>
+  </footer>
 
-                <label for="tarjeta">Número de Tarjeta de Propiedad:</label>
-                <input type="text" name="tarjeta">
+  <script>
+    function mostrarModal(event) {
+        event.preventDefault(); // Evita el envío normal del formulario
 
-                <label for="categoria">Categoría(s):</label>
-                <input type="text" name="categoria">
+        fetch("{{ url_for('registrar') }}", {
+            method: "POST",
+            body: new FormData(event.target)
+        })
+        .then(response => response.json())
+        .then(data => {
+            // Si se recibe un error (por ejemplo, cédula ya registrada)
+            if (data.error) {
+                // Actualiza el modal para mostrar el error
+                document.querySelector("#modalQR .modal-content h2").innerText = "Error";
+                document.querySelector("#modalQR .modal-content p").innerText = data.error;
+                // Oculta la imagen y los botones
+                document.getElementById("qrImage").style.display = "none";
+                document.querySelector(".modal-buttons").style.display = "none";
+                // Muestra el modal
+                document.getElementById("modalQR").style.display = "flex";
+                // Limpia los campos del formulario después del registro exitoso
+                limpiarCamposFormulario();
 
-                <label for="vencimiento">Fecha de Vencimiento:</label>
-                <input type="date" name="vencimiento" id="vencimiento">
+                return;
+            }
 
-                <label for="soat">SOAT:</label>
-                <input type="date" name="soat" id="soat">
+            // Si la respuesta es exitosa (se generó el QR)
+            if (data.qr_path) {
+                // Restaura el contenido del modal para la confirmación
+                document.querySelector("#modalQR .modal-content h2").innerText = "Usuario Registrado";
+                document.querySelector("#modalQR .modal-content p").innerText = "El registro ha sido exitoso. Aquí está el código QR:";
+                document.getElementById("qrImage").style.display = "block";
+                document.querySelector(".modal-buttons").style.display = "flex";
 
-                <label for="tecnomecanica">Tecnomecánica:</label>
-                <input type="date" name="tecnomecanica" id="tecnomecanica">
+                // Actualiza la imagen del QR y el enlace de descarga
+                document.getElementById("qrImage").src = data.qr_path;
+                document.getElementById("downloadQR").href = "{{ url_for('download_qr', cedula='') }}" + data.cedula;
 
-                <label for="observaciones">Observaciones:</label>
-                <textarea name="observaciones"></textarea>
+                // Muestra el modal
+                document.getElementById("modalQR").style.display = "flex";
 
-                <button type="submit">Registrar</button>
-            </form>
-        </div>
+                // Limpia los campos del formulario después del registro exitoso
+                limpiarCamposFormulario();
 
-        <div class="qr-container hidden" id="qrContainer">
-            <h2>Código QR Generado:</h2>
-            <img src="{{ qr_path }}" alt="Código QR">
-            <a href="{{ qr_path }}" download="codigo_qr.png">Descargar</a>
-            <a href="#" onclick="window.print(); return false;">Imprimir</a>
-        </div>
-    </main>
+            } else {
+                console.error("No se recibió qr_path en la respuesta.");
+            }
+        })
+        .catch(error => console.error("Error:", error));
+    }
 
-    <footer>
-        <p>&copy; 2025 TS3+. Todos los derechos reservados.</p>
-        <p class="legal">Esta página cumple con las normativas actuales de protección de datos y accesibilidad. Para más información, consulta nuestra <a href="#" style="color: var(--secondary-color);">política de privacidad</a>.</p>
-    </footer>
 
-    <script>
-        function showQR() {
-            document.getElementById('qrContainer').classList.remove('hidden');
-        }
 
-        function formatDates(event) {
-            // Formatea las fechas a DD/MM/AAAA antes de enviar el formulario
-            const vencimiento = document.getElementById('vencimiento');
-            const soat = document.getElementById('soat');
-            const tecnomecanica = document.getElementById('tecnomecanica');
+    function cerrarModal() {
+      document.getElementById("modalQR").style.display = "none";
+    }
 
-            vencimiento.value = formatDate(vencimiento.value);
-            soat.value = formatDate(soat.value);
-            tecnomecanica.value = formatDate(tecnomecanica.value);
-        }
+    function imprimirQR() {
+        // Obtener la URL del QR a partir del atributo src de la imagen en el modal
+        var qrSrc = document.getElementById("qrImage").src;
+        // Abrir una nueva ventana
+        var ventana = window.open("", "_blank");
 
-        function formatDate(date) {
-            if (!date) return '';
-            const [year, month, day] = date.split('-');
-            return `${day}/${month}/${year}`; // Formato DD/MM/AAAA
-        }
-    </script>
+        // Escribir el contenido HTML con la imagen centrada y con un tamaño mayor
+        ventana.document.write(`
+            <html>
+                <head>
+                    <title>Imprimir QR</title>
+                    <style>
+                        /* Se utiliza Flexbox para centrar el contenido */
+                        body {
+                            margin: 0;
+                            padding: 0;
+                            display: flex;
+                            justify-content: center;
+                            align-items: center;
+                            height: 100vh;
+                            background-color: #fff;
+                        }
+                        /* Estilos para la imagen del QR */
+                        img {
+                            max-width: 80%;  /* Ajusta este valor para agrandar o reducir el tamaño */
+                            height: auto;
+                            display: block;
+                        }
+                    </style>
+                </head>
+                <body>
+                    <img id="imgQR" src="${qrSrc}" alt="Código QR">
+                </body>
+            </html>
+        `);
+        ventana.document.close();
+
+        // Esperar a que la imagen se cargue para ejecutar el print
+        var img = ventana.document.getElementById("imgQR");
+        img.onload = function() {
+            ventana.print();
+            ventana.close();
+        };
+
+        // En caso de cache, forzar el print con un pequeño retraso
+        setTimeout(function(){
+            if (!img.complete) return;
+            ventana.print();
+            ventana.close();
+        }, 500);
+    }
+    function limpiarCamposFormulario() {
+        document.querySelectorAll(".form-container form input, .form-container form textarea").forEach(input => {
+            input.value = "";
+        });
+    }
+
+  </script>
+
 </body>
 
 </html>

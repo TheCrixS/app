@@ -1,4 +1,4 @@
-from flask import render_template, request, redirect, url_for, flash, jsonify
+from flask import render_template, request, redirect, url_for, flash, jsonify, abort, send_from_directory
 import pandas as pd
 import qrcode
 import os
@@ -15,8 +15,8 @@ def calcular_estado(soat, tecnomecanica):
     """Determina si el estado es 'Activo' o 'Inactivo' según las fechas del SOAT y la tecnomecánica."""
     try:
         fecha_actual = datetime.today().date()
-        soat_vencimiento = datetime.strptime(soat, "%d/%m/%Y").date()
-        tecnomecanica_vencimiento = datetime.strptime(tecnomecanica, "%d/%m/%Y").date()
+        soat_vencimiento = datetime.strptime(soat, "%Y/%m/%d").date()
+        tecnomecanica_vencimiento = datetime.strptime(tecnomecanica, "%Y/%m/%d").date()
         return "Activo" if soat_vencimiento >= fecha_actual and tecnomecanica_vencimiento >= fecha_actual else "Inactivo"
     except ValueError:
         return "Inactivo"  # Si hay un error con la fecha, se marca como "Inactivo"
@@ -52,6 +52,11 @@ def init_routes(app):
             tecnomecanica = request.form['tecnomecanica']
             observaciones = request.form['observaciones']
 
+            # Convertir fechas a formato AAAA/MM/DD
+            vencimiento = datetime.strptime(vencimiento, "%Y-%m-%d").strftime("%Y/%m/%d")
+            soat = datetime.strptime(soat, "%Y-%m-%d").strftime("%Y/%m/%d")
+            tecnomecanica = datetime.strptime(tecnomecanica, "%Y-%m-%d").strftime("%Y/%m/%d")
+
             # Cargar la base de datos
             try:
                 df = pd.read_excel(DATABASE_FILE, sheet_name=SHEET_NAME, dtype=str)
@@ -64,7 +69,7 @@ def init_routes(app):
             # Verificar si la cédula ya existe
             if cedula in df["CEDULA"].astype(str).values:
                 flash("Error: La cédula ya está registrada.", "danger")
-                return redirect(url_for('registrar'))
+                return jsonify({"error": "La cédula ya está registrada."})
 
             # Generar un nuevo ID
             nuevo_id = obtener_nuevo_id(df)
@@ -97,11 +102,16 @@ def init_routes(app):
             # Generar código QR con ID
             qr_data = f"ID: {nuevo_id}"
             qr = qrcode.make(qr_data)
-            qr_path = os.path.join(QR_FOLDER, f"{nuevo_id}.png")
+            qr_path = os.path.join(QR_FOLDER, f"{cedula}.png")
             qr.save(qr_path)
 
-            flash("Usuario registrado con éxito.", "success")
-            return render_template('register.html', qr_path=qr_path)
+            qr_path = os.path.join(QR_FOLDER, f"{cedula}.png")
+            qr.save(qr_path)
+
+            # Generar ruta relativa para el navegador
+            relative_qr_path = f"/static/qr_codes/{cedula}.png"
+            return jsonify({"qr_path": relative_qr_path, "cedula": cedula})
+
 
         return render_template('register.html', qr_path=None)
 
@@ -165,3 +175,12 @@ def init_routes(app):
 
         except Exception as e:
             return jsonify({"message": f"Error: {str(e)}"})
+        
+    @app.route('/download_qr/<cedula>')
+    def download_qr(cedula):
+        filename = f"{cedula}.png"
+        file_path = os.path.join(QR_FOLDER, filename)
+        if os.path.exists(file_path):
+            return send_from_directory(QR_FOLDER, filename, as_attachment=True, download_name="codigo_qr.png")
+        else:
+            abort(404, description="El archivo QR no existe.")
