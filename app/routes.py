@@ -8,7 +8,7 @@ import numpy as np
 from pyzbar.pyzbar import decode
 
 DATABASE_FILE = "BASE SOAT.xlsx"
-QR_FOLDER = "static/qr_codes"
+QR_FOLDER = os.path.join(os.getcwd(), 'static', 'qr_codes')
 SHEET_NAME = "BASE"
 
 def calcular_estado(soat, tecnomecanica):
@@ -105,9 +105,6 @@ def init_routes(app):
             qr_path = os.path.join(QR_FOLDER, f"{cedula}.png")
             qr.save(qr_path)
 
-            qr_path = os.path.join(QR_FOLDER, f"{cedula}.png")
-            qr.save(qr_path)
-
             # Generar ruta relativa para el navegador
             relative_qr_path = f"/static/qr_codes/{cedula}.png"
             return jsonify({"qr_path": relative_qr_path, "cedula": cedula})
@@ -181,6 +178,9 @@ def init_routes(app):
         filename = f"{cedula}.png"
         file_path = os.path.join(QR_FOLDER, filename)
         if os.path.exists(file_path):
-            return send_from_directory(QR_FOLDER, filename, as_attachment=True, download_name="codigo_qr.png")
+            print(f"Directorio actual: {os.getcwd()}")
+            print(f"Ruta de QR_FOLDER: {QR_FOLDER}")
+            print(f"Ruta completa del archivo: {file_path}")
+            return send_from_directory(QR_FOLDER, filename, as_attachment=True, download_name=f"{cedula}.png")
         else:
             abort(404, description="El archivo QR no existe.")
