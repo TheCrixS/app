@@ -255,7 +255,6 @@
       <img id="qrImage" src="" alt="Código QR">
       <div class="modal-buttons">
         <!-- El href se actualiza dinámicamente con JavaScript -->
-        <a id="downloadQR" href="" download=>Descargar</a>
         <a href="#" onclick="imprimirQR(); return false;">Imprimir</a>
       </div>
     </div>
@@ -303,13 +302,6 @@
 
                 // Actualiza la imagen del QR y el enlace de descarga
                 document.getElementById("qrImage").src = data.qr_path;
-                //document.getElementById("downloadQR").href = "{{ url_for('download_qr', cedula='') }}" + data.cedula;
-
-                // Actualizar el href y el nombre del archivo de descarga con la cédula
-                let downloadLink = document.getElementById("downloadQR");
-                //downloadLink.href = data.qr_path;
-                downloadLink.href = "{{ url_for('download_qr', cedula='') }}" + data.qr_path;
-                downloadLink.download = data.cedula + ".png"; // Nombre del archivo = Cedula.png
 
                 // Muestra el modal
                 document.getElementById("modalQR").style.display = "flex";

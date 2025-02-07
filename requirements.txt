@@ -6,3 +6,4 @@ pyzbar
 cryptography
 openpyxl
 pillow
+werkzeug.utils

@@ -6,6 +6,7 @@ from datetime import datetime
 import cv2
 import numpy as np
 from pyzbar.pyzbar import decode
+from werkzeug.utils import secure_filename
 
 DATABASE_FILE = "BASE SOAT.xlsx"
 QR_FOLDER = os.path.join(os.getcwd(), 'static', 'qr_codes')
@@ -173,14 +174,123 @@ def init_routes(app):
         except Exception as e:
             return jsonify({"message": f"Error: {str(e)}"})
         
-    @app.route('/download_qr/<cedula>')
-    def download_qr(cedula):
-        filename = f"{cedula}.png"
-        file_path = os.path.join(QR_FOLDER, filename)
-        if os.path.exists(file_path):
-            print(f"Directorio actual: {os.getcwd()}")
-            print(f"Ruta de QR_FOLDER: {QR_FOLDER}")
-            print(f"Ruta completa del archivo: {file_path}")
-            return send_from_directory(QR_FOLDER, filename, as_attachment=True, download_name=f"{cedula}.png")
-        else:
-            abort(404, description="El archivo QR no existe.")
+    # Función que valida que el archivo tenga extensión Excel
+    def allowed_file(filename):
+        return '.' in filename and filename.rsplit('.', 1)[1].lower() in ['xls', 'xlsx']
+    
+    @app.route('/cargue_masivo', methods=['POST'])
+    def cargue_masivo():
+        # Verificar que se haya enviado el archivo
+        if 'documento' not in request.files:
+            flash('No se seleccionó ningún archivo.')
+            return redirect(url_for('index'))
+        file = request.files['documento']
+        if file.filename == '':
+            flash('No se seleccionó ningún archivo.')
+            return redirect(url_for('index'))
+        if not allowed_file(file.filename):
+            flash('Solo se permiten archivos Excel (.xls, .xlsx).')
+            return redirect(url_for('index'))
+        
+        # Guardar el archivo temporalmente
+        filename = secure_filename(file.filename)
+        temp_folder = 'temp'
+        if not os.path.exists(temp_folder):
+            os.makedirs(temp_folder)
+        temp_path = os.path.join(temp_folder, filename)
+        file.save(temp_path)
+        
+        # Intentar leer el archivo Excel subido
+        try:
+            df_upload = pd.read_excel(temp_path)
+        except Exception as e:
+            flash(f'Error al leer el archivo: {e}')
+            os.remove(temp_path)
+            return redirect(url_for('index'))
+        
+        # Cargar la base de datos
+        try:
+            df = pd.read_excel(DATABASE_FILE, sheet_name=SHEET_NAME, dtype=str)
+        except (FileNotFoundError, ValueError):
+            df = pd.DataFrame(columns=["ID", "ESTADO", "CEDULA", "NOMBRES Y APELLIDOS", "EMPRESA", 
+                                           "TIPO DE TRANSPORTE", "PLACA", "TARJETA DE PROPIEDAD", 
+                                           "CATEGORIA(S)", "FECHA DE VENCIMIENTO", "SOAT", 
+                                           "TECNOMECANICA", "OBSERVACIONES"])
+        
+        # Procesar cada registro del archivo subido
+        for index, row in df_upload.iterrows():
+            # Suponemos que las columnas en el Excel se llaman exactamente:
+            # 'CEDULA', 'NOMBRES Y APELLIDOS', 'EMPRESA', 'TIPO DE TRANSPORTE',
+            # 'PLACA', 'TARJETA DE PROPIEDAD', 'CATEGORIA(S)', 'FECHA DE VENCIMIENTO',
+            # 'SOAT', 'TECNOMECANICA', 'OBSERVACIONES'
+            cedula = str(row.get('CEDULA')).strip()
+            # Si la cédula ya existe en la base, se omite este registro
+            if cedula in df["CEDULA"].astype(str).values:
+                continue
+            
+            nombre = row.get('NOMBRES Y APELLIDOS', '')
+            empresa = row.get('EMPRESA', '')
+            transporte = row.get('TIPO DE TRANSPORTE', '')
+            placa = row.get('PLACA', '')
+            tarjeta = row.get('TARJETA DE PROPIEDAD', '')
+            categoria = row.get('CATEGORIA(S)', '')
+            vencimiento_val = row.get('FECHA DE VENCIMIENTO', '')
+            soat_val = row.get('SOAT', '')
+            tecnomecanica_val = row.get('TECNOMECANICA', '')
+            observaciones = row.get('OBSERVACIONES', '')
+            
+        # Convertir las fechas al formato "AAAA/MM/DD"
+            def convert_date(value):
+                try:
+                    if pd.notnull(value):
+                        if isinstance(value, pd.Timestamp):
+                            return value.strftime("%Y/%m/%d")
+                        else:
+                            # Asumimos que viene en formato "AAAA-MM-DD"
+                            return datetime.strptime(str(value), "%Y-%m-%d").strftime("%Y/%m/%d")
+                except Exception:
+                    return ""
+                return ""
+            
+            vencimiento = convert_date(vencimiento_val)
+            soat = convert_date(soat_val)
+            tecnomecanica = convert_date(tecnomecanica_val)
+            
+            # Generar un nuevo ID y calcular el estado
+            nuevo_id = obtener_nuevo_id(df)
+            estado = calcular_estado(soat, tecnomecanica)
+            
+            # Crear el diccionario con la información del usuario
+            new_row = pd.DataFrame ([{
+                "ID": nuevo_id,
+                "ESTADO": estado,
+                "CEDULA": cedula,
+                "NOMBRES Y APELLIDOS": nombre,
+                "EMPRESA": empresa,
+                "TIPO DE TRANSPORTE": transporte,
+                "PLACA": placa,
+                "TARJETA DE PROPIEDAD": tarjeta,
+                "CATEGORIA(S)": categoria,
+                "FECHA DE VENCIMIENTO": vencimiento,
+                "SOAT": soat,
+                "TECNOMECANICA": tecnomecanica,
+                "OBSERVACIONES": observaciones
+            }])
+            
+            df = pd.concat([df, new_row], ignore_index=True)
+
+            # Generar el código QR para el usuario
+            qr_data = f"ID: {nuevo_id}"
+            qr = qrcode.make(qr_data)
+            qr_file_path = os.path.join(QR_FOLDER, f"{cedula}.png")
+            qr.save(qr_file_path)
+        
+        # Guardar la base de datos actualizada en el archivo Excel
+        with pd.ExcelWriter(DATABASE_FILE, engine="openpyxl", mode="w") as writer:
+            df.to_excel(writer, sheet_name=SHEET_NAME, index=False)
+        
+        # Eliminar el archivo temporal
+        os.remove(temp_path)
+        
+        flash('Cargue masivo completado exitosamente.')
+        return redirect(url_for('index'))
