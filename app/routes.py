@@ -292,5 +292,5 @@ def init_routes(app):
         # Eliminar el archivo temporal
         os.remove(temp_path)
         
-        flash('Cargue masivo completado exitosamente.')
+        flash('Cargue completado exitosamente.', 'Success')
         return redirect(url_for('index'))
