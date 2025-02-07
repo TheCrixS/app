@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modificar Usuarios</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background: url('../static/palma.jpg') no-repeat center center fixed;
+            background-size: cover;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.9);
+            padding: 20px;
+            border-radius: 10px;
+            margin: 50px auto;
+            width: 80%;
+            box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.2);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: center;
+        }
+
+        th {
+            background-color: #FF914D;
+            color: white;
+        }
+
+        button {
+            padding: 8px;
+            font-size: 14px;
+            border: none;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+
+        .edit-btn {
+            background-color: #071C23;
+            color: white;
+        }
+
+        .qr-btn {
+            background-color: #6C63FF;
+            color: white;
+        }
+
+        .delete-btn {
+            background-color: red;
+            color: white;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            width: 300px;
+            position: relative;
+        }
+
+        .close-button {
+            position: absolute;
+            top: 10px;
+            right: 20px;
+            font-size: 24px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h2>Modificar Usuarios Registrados</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Cédula</th>
+                    <th>Nombre</th>
+                    <th>Placa</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody id="userTable">
+                <!-- Aquí se insertarán los datos dinámicamente -->
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Modal para Ver QR -->
+    <div id="modalQR" class="modal">
+        <div class="modal-content">
+            <span class="close-button" onclick="closeModal()">×</span>
+            <h2>Código QR</h2>
+            <img id="qrImage" src="" alt="Código QR">
+        </div>
+    </div>
+
+    <script>
+        function fetchUsers() {
+            fetch("{{ url_for('get_users') }}")
+            .then(response => response.json())
+            .then(data => {
+                let table = document.getElementById("userTable");
+                table.innerHTML = "";
+                data.forEach(user => {
+                    let row = `<tr>
+                        <td>${user.cedula}</td>
+                        <td>${user.nombre}</td>
+                        <td>${user.placa}</td>
+                        <td>
+                            <button class="edit-btn" onclick="editUser('${user.cedula}')">Editar</button>
+                            <button class="qr-btn" onclick="viewQR('${user.qr_path}')">Ver QR</button>
+                            <button class="delete-btn" onclick="deleteUser('${user.cedula}')">Eliminar</button>
+                        </td>
+                    </tr>`;
+                    table.innerHTML += row;
+                });
+            })
+            .catch(error => console.error("Error:", error));
+        }
+
+        function viewQR(qrPath) {
+            document.getElementById("qrImage").src = qrPath;
+            document.getElementById("modalQR").style.display = "flex";
+        }
+
+        function closeModal() {
+            document.getElementById("modalQR").style.display = "none";
+        }
+
+        function deleteUser(cedula) {
+            if (confirm("¿Estás seguro de eliminar este usuario?")) {
+                fetch("{{ url_for('delete_user') }}", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ cedula: cedula })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    alert(data.message);
+                    fetchUsers();
+                })
+                .catch(error => console.error("Error:", error));
+            }
+        }
+
+        window.onload = fetchUsers;
+    </script>
+
+</body>
+</html>

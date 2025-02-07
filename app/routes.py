@@ -294,3 +294,32 @@ def init_routes(app):
         
         flash('Cargue completado exitosamente.', 'Success')
         return redirect(url_for('index'))
+   
+    @app.route('/modificar_usuario')
+    def modificar_usuario():
+        return render_template('modificar_usuario.html')
+
+    @app.route('/get_users')
+    def get_users():
+        try:
+            df = pd.read_excel(DATABASE_FILE, sheet_name=SHEET_NAME, dtype=str)
+            users = df.to_dict(orient="records")
+            return jsonify(users)
+        except Exception as e:
+            return jsonify({"error": str(e)})
+
+    @app.route('/delete_user', methods=['POST'])
+    def delete_user():
+        try:
+            data = request.get_json()
+            cedula = data.get("cedula")
+
+            df = pd.read_excel(DATABASE_FILE, sheet_name=SHEET_NAME, dtype=str)
+            df = df[df["CEDULA"] != cedula]  # Filtramos el usuario a eliminar
+
+            with pd.ExcelWriter(DATABASE_FILE, engine="openpyxl", mode="w") as writer:
+                df.to_excel(writer, sheet_name=SHEET_NAME, index=False)
+
+            return jsonify({"message": "Usuario eliminado correctamente."})
+        except Exception as e:
+            return jsonify({"error": str(e)})
