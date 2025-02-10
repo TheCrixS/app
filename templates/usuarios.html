@@ -6,6 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Usuarios Registrados</title>
   <link rel="icon" href="{{ url_for('static', filename='logo-ts3.png') }}" type="image/x-icon">
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
   <style>
     :root {
       --primary-color: #071C23;
@@ -27,10 +28,12 @@
     }
 
     header {
+      display: flex;
       background-color: rgba(7, 28, 35, 0.9);
       color: white;
       padding: 1rem;
       text-align: center;
+      box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
     }
 
     .legal {
@@ -45,18 +48,37 @@
       margin-top: auto;
     }
 
+    /* Contenedor para los botones: se ubican al inicio (izquierda) y se separan del logo */
+    .button-container {
+      display: flex;
+      align-items: center;
+      gap: 1rem;      /* Espacio entre botones */
+      margin-left: auto; /* Esto empuja el siguiente elemento (logo) hacia la derecha */
+    }
+
+    /* Estilos para los botones */
     .back-button {
-      position: absolute;
-      top: 50%;
-      left: 1rem;
-      transform: translateY(-50%);
       color: white;
-      background-color: var(--primary-color);
+      background-color: var(--secondary-color); /* Tono naranjado */
       padding: 0.8rem 1.5rem;
       text-decoration: none;
       border-radius: 5px;
       font-size: 1rem;
       transition: background-color 0.3s ease;
+      display: inline-block;
+    }
+
+    .back-button:hover {
+      background-color: #ff7c2b; /* Variante de hover en naranja */
+    }
+    .logo-link {
+      margin-right: auto; /* Empuja el logo al lado derecho */
+    }
+
+    .header-logo {
+      /* Ajusta el tamaño que desees */
+      height: 80px;  /* O el tamaño que prefieras */
+      width: auto;   /* Mantiene la proporción del logo */
     }
 
     .container {
@@ -225,110 +247,31 @@
     .modal-buttons a:hover {
       background-color: #5643d6;
     }
-    /* Estilo del Modal */
-    .modalEDIT {
-        display: none;
-        position: fixed;
-        z-index: 1000;
-        left: 0;
-        top: 0;
-        width: 100%;
-        height: 100%;
-        background-color: rgba(0, 0, 0, 0.5);
-        align-items: center;
-        justify-content: center;
+        /* Estilos para el formulario del modal de edición */
+        #formEditarUsuario label {
+      display: block;
+      margin-top: 10px;
+      text-align: left;
+      font-weight: bold;
     }
-
-    /* Contenido del Modal */
-    .modal-contentEDIT {
-        background-color: rgba(255, 255, 255, 0.95);
-        padding: 25px;
-        border-radius: 10px;
-        width: 400px;
-        max-width: 90%;
-        box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.3);
-        position: relative;
-        text-align: center;
+    #formEditarUsuario input,
+    #formEditarUsuario textarea {
+      width: 100%;
+      padding: 8px;
+      margin-top: 5px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      box-sizing: border-box;
     }
-
-    /* Botón para cerrar el modal */
-    .close-buttonEDIT {
-        position: absolute;
-        top: 15px;
-        right: 20px;
-        font-size: 24px;
-        font-weight: bold;
-        cursor: pointer;
-        color: var(--primary-color);
-    }
-
-    /* Estilo del Formulario en el Modal */
-    .modal-form-group {
-        display: flex;
-        flex-direction: column;
-        margin-bottom: 10px;
-        text-align: left;
-    }
-
-    .modal-form-group label {
-        font-size: 0.9rem;
-        font-weight: bold;
-        color: var(--primary-color);
-    }
-
-    .modal-form-group input, .modal-form-group textarea, .modal-form-group select {
-        padding: 8px;
-        border: 2px solid var(--primary-color);
-        border-radius: 8px;
-        font-size: 0.9rem;
-        text-align: left;
-        transition: all 0.3s ease-in-out;
-        width: 100%;
-    }
-
-    .modal-form-group input:focus, 
-    .modal-form-group textarea:focus, 
-    .modal-form-group select:focus {
-        border-color: var(--secondary-color);
-        outline: none;
-        box-shadow: 0px 0px 10px rgba(255, 145, 77, 0.5);
-    }
-
-    /* Botones del modal */
-    .modal-buttons {
-        display: flex;
-        justify-content: space-between;
-        gap: 10px;
-    }
-
-    .btn-save {
-        padding: 10px;
-        background-color: var(--accent-color);
-        color: white;
-        border: none;
-        border-radius: 8px;
-        font-size: 1rem;
-        cursor: pointer;
-        width: 48%;
-    }
-
-    .btn-cancel {
-        padding: 10px;
-        background-color: #ccc;
-        color: var(--text-color);
-        border: none;
-        border-radius: 8px;
-        font-size: 1rem;
-        cursor: pointer;
-        width: 48%;
-    }
-
-    .btn-save:hover {
-        background-color: #FF7600;
-    }
-
-    .btn-cancel:hover {
-        background-color: #b3b3b3;
+    #formEditarUsuario button {
+      margin-top: 15px;
+      background-color: var(--secondary-color);
+      color: white;
+      padding: 10px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      width: 100%;
     }
   </style>
     <script>
@@ -358,18 +301,107 @@
                 }
             }
         }
+        // Función para mostrar el modal de edición y completar los campos del formulario
+        $(document).on('click', '.btn-edit-user', function() {
+          // Extraer datos del botón (atributos data-*)
+          var id = $(this).data('id');
+          var cedula = $(this).data('cedula');
+          var nombres = $(this).data('nombres');
+          var empresa = $(this).data('empresa');
+          var transporte = $(this).data('transporte');
+          var placa = $(this).data('placa');
+          var tarjeta = $(this).data('tarjeta');
+          var categoria = $(this).data('categoria');
+          var vencimiento = $(this).data('vencimiento');
+          var soat = $(this).data('soat');
+          var tecnomecanica = $(this).data('tecnomecanica');
+          var observaciones = $(this).data('observaciones');
+          
+          // Completar los campos del formulario
+          $('#edit-id').val(id);
+          $('#edit-cedula').val(cedula);
+          $('#edit-nombres').val(nombres);
+          $('#edit-empresa').val(empresa);
+          $('#edit-transporte').val(transporte);
+          $('#edit-placa').val(placa);
+          $('#edit-tarjeta').val(tarjeta);
+          $('#edit-categoria').val(categoria);
+          $('#edit-vencimiento').val(vencimiento);
+          $('#edit-soat').val(soat);
+          $('#edit-tecnomecanica').val(tecnomecanica);
+          $('#edit-observaciones').val(observaciones);
+          
+          // Mostrar el modal de edición
+          $('#modalEditar').css('display', 'flex');
+        });
+        
+        // Función para cerrar el modal de edición
+        function cerrarModalEditar() {
+          $('#modalEditar').css('display', 'none');
+        }
+        
+        function mostrarQR(cedula) {
+          document.getElementById("qrImage").src = "../static/qr_codes/" + cedula + ".png";
+          document.getElementById("modalQR").style.display = "flex";
+        }
+
+        function closeModal() {
+          document.getElementById("modalQR").style.display = "none";
+        }
+        function imprimirQR() {
+          var qrSrc = document.getElementById("qrImage").src;
+          var ventana = window.open("", "_blank");
+
+          ventana.document.write(`
+              <html>
+                  <head>
+                      <title>Imprimir QR</title>
+                      <style>
+                          body {
+                              margin: 0;
+                              padding: 0;
+                              display: flex;
+                              justify-content: center;
+                              align-items: center;
+                              height: 100vh;
+                              background-color: #fff;
+                          }
+                          img {
+                              max-width: 80%;
+                              height: auto;
+                              display: block;
+                          }
+                      </style>
+                  </head>
+                  <body>
+                      <img id="imgQR" src="${qrSrc}" alt="Código QR">
+                  </body>
+              </html>
+          `);
+          ventana.document.close();
+
+          var img = ventana.document.getElementById("imgQR");
+          img.onload = function() {
+              ventana.print();
+              ventana.close();
+          };
+
+          setTimeout(function(){
+              if (!img.complete) return;
+              ventana.print();
+              ventana.close();
+          }, 500);
+        }
       </script>
 </head>
 
 <body>
   <header>
-    <h1>
-        <a href="{{ url_for('index') }}">
-          <img src="../static/logo-ts3.png" alt="TS3+ Logo" class="header-logo">
-        </a>
-    </h1>
-    <a class="back-button" href="{{ url_for('index') }}">Volver al Menú Principal</a>
-    <div>
+      <a href="{{ url_for('index') }}">
+        <img src="../static/logo-ts3.png" alt="TS3+ Logo" class="header-logo">
+      </a>
+    <div class="button-container">
+      <a class="back-button" href="{{ url_for('index') }}">Volver al Menú Principal</a>
       <a class="back-button" href="{{ url_for('logout') }}">Cerrar sesión</a>
     </div>
   </header>
@@ -387,7 +419,7 @@
                       {% for col in usuarios[0].keys() %}
                         <th>{{ col }}</th>
                       {% endfor %}
-                      <th>Acciones</th>
+                      <th>Acciones</th data-id=>
                     {% else %}
                       <th>No hay usuarios registrados</th>
                     {% endif %}
@@ -401,8 +433,21 @@
                         <td>{{ value }}</td>
                       {% endfor %}
                       <td>
-                        <button class="btn btn-edit" >Editar</button>                            
-                        <button class="btn-qr" onclick="mostrarQR('{{usuario.CEDULA}}')">Ver QR</button>
+                        <button class="btn btn-edit-user"
+                          data-id="{{ usuario['ID'] }}"
+                          data-cedula="{{ usuario['CEDULA'] }}"
+                          data-nombres="{{ usuario['NOMBRES Y APELLIDOS'] }}"
+                          data-empresa="{{ usuario['EMPRESA'] }}"
+                          data-transporte="{{ usuario['TIPO DE TRANSPORTE'] }}"
+                          data-placa="{{ usuario['PLACA'] }}"
+                          data-tarjeta="{{ usuario['TARJETA DE PROPIEDAD'] }}"
+                          data-categoria="{{ usuario['CATEGORIA(S)'] }}"
+                          data-vencimiento="{{ usuario['FECHA DE VENCIMIENTO'] }}"
+                          data-soat="{{ usuario['SOAT'] }}"
+                          data-tecnomecanica="{{ usuario['TECNOMECANICA'] }}"
+                          data-observaciones="{{ usuario['OBSERVACIONES'] }}"
+                        >Editar</button>                      
+                        <button class="btn btn-qr" onclick="mostrarQR('{{usuario.CEDULA}}')">Ver QR</button>
                         <form action="{{ url_for('eliminar_usuario', id=usuario['ID']) }}" method="post" style="display:inline;" onsubmit="confirmarEliminacion(event)">
                           <button type="submit" class="btn btn-delete">Eliminar</button>
                         </form>
@@ -413,6 +458,7 @@
                 </tbody>
               </table>
         </div>
+    </div>
     </div>
     <!-- Modal para Ver QR -->
     <div id="modalQR" class="modal">
@@ -426,71 +472,58 @@
             </div>
         </div>
     </div>
+
+        <!-- Modal para Editar Usuario -->
+        <div id="modalEditar" class="modal">
+          <div class="modal-content">
+            <span class="close-button" onclick="cerrarModalEditar()">×</span>
+            <h2>Editar Usuario</h2>
+            <!-- El formulario envía al endpoint de edición (actualiza según tu ruta) -->
+            <form id="formEditarUsuario" action="{{ url_for('editar_usuario') }}" method="POST">
+              <!-- Input oculto para el ID (no se muestra ni se edita) -->
+              <input type="hidden" name="id" id="edit-id">
+              
+              <label for="edit-cedula">Cédula:</label>
+              <input type="text" name="cedula" id="edit-cedula" required>
+              
+              <label for="edit-nombres">Nombres y Apellidos:</label>
+              <input type="text" name="nombres" id="edit-nombres" required>
+              
+              <label for="edit-empresa">Empresa:</label>
+              <input type="text" name="empresa" id="edit-empresa">
+              
+              <label for="edit-transporte">Tipo de Transporte:</label>
+              <input type="text" name="transporte" id="edit-transporte">
+              
+              <label for="edit-placa">Placa:</label>
+              <input type="text" name="placa" id="edit-placa">
+              
+              <label for="edit-tarjeta">Tarjeta de Propiedad:</label>
+              <input type="text" name="tarjeta" id="edit-tarjeta">
+              
+              <label for="edit-categoria">Categoría(s):</label>
+              <input type="text" name="categoria" id="edit-categoria">
+              
+              <label for="edit-vencimiento">Fecha de Vencimiento:</label>
+              <input type="text" name="vencimiento" id="edit-vencimiento">
+              
+              <label for="edit-soat">SOAT:</label>
+              <input type="text" name="soat" id="edit-soat">
+              
+              <label for="edit-tecnomecanica">Tecnomecánica:</label>
+              <input type="text" name="tecnomecanica" id="edit-tecnomecanica">
+              
+              <label for="edit-observaciones">Observaciones:</label>
+              <textarea name="observaciones" id="edit-observaciones"></textarea>
+              
+              <button type="submit" class="btn btn-edit">Guardar cambios</button>
+            </form>
+          </div>
+        </div>
   </main>
   <footer>
     <p>&copy; 2025 TS3+. Todos los derechos reservados.</p>
     <p class="legal">Esta página cumple con las normativas actuales de protección de datos y accesibilidad. Para más información, consulta nuestra <a href="#" style="color: var(--secondary-color);">política de privacidad</a>.</p>
   </footer>
-  <script>
-        function mostrarQR(cedula) {
-            document.getElementById("qrImage").src = "../static/qr_codes/"+cedula+".png";
-            document.getElementById("modalQR").style.display = "flex";
-        }
-
-        function closeModal() {
-            document.getElementById("modalQR").style.display = "none";
-        }
-        function imprimirQR() {
-            // Obtener la URL del QR a partir del atributo src de la imagen en el modal
-            var qrSrc = document.getElementById("qrImage").src;
-            // Abrir una nueva ventana
-            var ventana = window.open("", "_blank");
-
-            // Escribir el contenido HTML con la imagen centrada y con un tamaño mayor
-            ventana.document.write(`
-                <html>
-                    <head>
-                        <title>Imprimir QR</title>
-                        <style>
-                            /* Se utiliza Flexbox para centrar el contenido */
-                            body {
-                                margin: 0;
-                                padding: 0;
-                                display: flex;
-                                justify-content: center;
-                                align-items: center;
-                                height: 100vh;
-                                background-color: #fff;
-                            }
-                            /* Estilos para la imagen del QR */
-                            img {
-                                max-width: 80%;  /* Ajusta este valor para agrandar o reducir el tamaño */
-                                height: auto;
-                                display: block;
-                            }
-                        </style>
-                    </head>
-                    <body>
-                        <img id="imgQR" src="${qrSrc}" alt="Código QR">
-                    </body>
-                </html>
-            `);
-            ventana.document.close();
-
-            // Esperar a que la imagen se cargue para ejecutar el print
-            var img = ventana.document.getElementById("imgQR");
-            img.onload = function() {
-                ventana.print();
-                ventana.close();
-            };
-
-            // En caso de cache, forzar el print con un pequeño retraso
-            setTimeout(function(){
-                if (!img.complete) return;
-                ventana.print();
-                ventana.close();
-            }, 500);
-        }
-  </script>
 </body>
 </html>

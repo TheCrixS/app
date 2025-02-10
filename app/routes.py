@@ -327,15 +327,12 @@ def init_routes(app):
             # Convertir DataFrame a lista de diccionarios para pasarlo a la plantilla
             usuarios = df.to_dict(orient='records')
             
-            return render_template('usuarios.html', usuarios=usuarios)
+            # Obtener los nombres de las columnas
+            columnas = df.columns.tolist()
+            
+            return render_template('usuarios.html', usuarios=usuarios, columnas=columnas)
         except Exception as e:
             return f"Error al leer el archivo: {str(e)}"
-
-    @app.route('/modificar_usuario')
-    @login_required
-    def modificar_usuario():
-        return render_template('modificar_usuario.html')
-
 
     @app.route('/eliminar_usuario/<int:id>', methods=['POST'])
     @login_required
@@ -400,3 +397,59 @@ def init_routes(app):
     def logout():
         session.pop('username', None)
         return redirect(url_for('login'))
+    
+    @app.route('/editar_usuario', methods=['POST'])
+    def editar_usuario():
+        # Obtener el ID del usuario desde el formulario (campo oculto)
+        user_id = request.form.get('id')
+        print(user_id)
+        if not user_id:
+            flash("ID del usuario no proporcionado.", "error")
+        
+        # Intentar leer el archivo Excel
+        try:
+            df = pd.read_excel(DATABASE_FILE, sheet_name=SHEET_NAME)
+        except Exception as e:
+            flash("Error al leer el archivo Excel: " + str(e), "error")
+            return redirect(url_for('index'))
+        
+        # Convertir el ID a entero (asumiendo que es numérico)
+        try:
+            user_id_int = int(user_id)
+        except ValueError:
+            flash("ID inválido.", "error")
+            return redirect(url_for('index'))
+        
+        # Buscar la fila correspondiente al usuario usando el ID
+        matching_rows = df[df['ID'] == user_id_int]
+        if matching_rows.empty:
+            flash("Usuario no encontrado.", "error")
+            return redirect(url_for('index'))
+        
+        # Obtener el índice de la fila a modificar
+        idx = matching_rows.index[0]
+        
+        # Actualizar los campos editables (excluyendo 'ID' y 'ESTADO')
+        df.at[idx, 'CEDULA'] = request.form.get('cedula')
+        df.at[idx, 'NOMBRES Y APELLIDOS'] = request.form.get('nombres')
+        df.at[idx, 'EMPRESA'] = request.form.get('empresa')
+        df.at[idx, 'TIPO DE TRANSPORTE'] = request.form.get('transporte')
+        df.at[idx, 'PLACA'] = request.form.get('placa')
+        df.at[idx, 'TARJETA DE PROPIEDAD'] = request.form.get('tarjeta')
+        df.at[idx, 'CATEGORIA(S)'] = request.form.get('categoria')
+        df.at[idx, 'FECHA DE VENCIMIENTO'] = request.form.get('vencimiento')
+        df.at[idx, 'SOAT'] = request.form.get('soat')
+        df.at[idx, 'TECNOMECANICA'] = request.form.get('tecnomecanica')
+        df.at[idx, 'OBSERVACIONES'] = request.form.get('observaciones')
+
+        app.logger.debug(f"Actualizando usuario con ID {user_id_int} en la fila {idx}.")
+        
+        # Guardar los cambios de vuelta en el archivo Excel
+        try:
+            df.to_excel(DATABASE_FILE, sheet_name=SHEET_NAME, index=False)
+            flash("Usuario actualizado correctamente.", "success")
+        except Exception as e:
+            flash("Error al guardar los cambios en el Excel: " + str(e), "error")
+            return render_template('usuarios.html')
+        
+        return redirect(url_for('index'))

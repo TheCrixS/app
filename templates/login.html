@@ -26,14 +26,12 @@
     }
 
     header {
+      display: flex;
       background-color: rgba(7, 28, 35, 0.9);
+      color: white;
       padding: 1rem;
       text-align: center;
       box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
-    }
-
-    header img {
-      max-height: 50px;
     }
 
     main {
@@ -105,12 +103,20 @@
       margin-top: auto;
       font-size: 0.8rem;
     }
+    .header-logo {
+      /* Ajusta el tamaño que desees */
+      height: 80px;  /* O el tamaño que prefieras */
+      width: auto;   /* Mantiene la proporción del logo */
+    }
+    .logo-link {
+      margin-left: auto; /* Empuja el logo al lado derecho */
+    }
   </style>
 </head>
 <body>
   <header>
     <a href="{{ url_for('index') }}">
-      <img src="../static/logo-ts3.png" alt="TS3+ Logo">
+      <img src="../static/logo-ts3.png" alt="TS3+ Logo" class="header-logo">
     </a>
   </header>
 

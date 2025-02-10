@@ -33,30 +33,12 @@
     }
 
     header {
+      display: flex;
       background-color: rgba(7, 28, 35, 0.9);
       color: white;
       padding: 1rem;
       text-align: center;
       box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
-      position: relative;
-    }
-
-    .back-button {
-      position: absolute;
-      top: 50%;
-      left: 1rem;
-      transform: translateY(-50%);
-      color: white;
-      background-color: var(--primary-color);
-      padding: 0.8rem 1.5rem;
-      text-decoration: none;
-      border-radius: 5px;
-      font-size: 1rem;
-      transition: background-color 0.3s ease;
-    }
-
-    .back-button:hover {
-      background-color: #064b68;
     }
 
     main {
@@ -193,18 +175,48 @@
     .legal {
       font-size: 0.8rem;
     }
+    /* Contenedor para los botones: se ubican al inicio (izquierda) y se separan del logo */
+    .button-container {
+      display: flex;
+      align-items: center;
+      gap: 1rem;      /* Espacio entre botones */
+      margin-left: auto; /* Esto empuja el siguiente elemento (logo) hacia la derecha */
+    }
+
+    /* Estilos para los botones */
+    .back-button {
+      color: white;
+      background-color: var(--secondary-color); /* Tono naranjado */
+      padding: 0.8rem 1.5rem;
+      text-decoration: none;
+      border-radius: 5px;
+      font-size: 1rem;
+      transition: background-color 0.3s ease;
+      display: inline-block;
+    }
+
+    .back-button:hover {
+      background-color: #ff7c2b; /* Variante de hover en naranja */
+    }
+    .logo-link {
+      margin-right: auto; /* Empuja el logo al lado derecho */
+    }
+
+    .header-logo {
+      /* Ajusta el tamaño que desees */
+      height: 80px;  /* O el tamaño que prefieras */
+      width: auto;   /* Mantiene la proporción del logo */
+    }
   </style>
 </head>
 
 <body>
   <header>
-    <h1>
       <a href="{{ url_for('index') }}">
         <img src="../static/logo-ts3.png" alt="TS3+ Logo" class="header-logo">
       </a>
-    </h1>
-    <a class="back-button" href="{{ url_for('index') }}">Volver al Menú Principal</a>
-    <div>
+    <div class="button-container">
+      <a class="back-button" href="{{ url_for('index') }}">Volver al Menú Principal</a>
       <a class="back-button" href="{{ url_for('logout') }}">Cerrar sesión</a>
     </div>
   </header>
