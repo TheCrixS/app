@@ -1,4 +1,5 @@
-from flask import render_template, request, redirect, url_for, flash, jsonify, abort, send_from_directory
+from flask import render_template, request, redirect, url_for, flash, jsonify, session
+from functools import wraps
 import pandas as pd
 import qrcode
 import os
@@ -9,8 +10,23 @@ from pyzbar.pyzbar import decode
 from werkzeug.utils import secure_filename
 
 DATABASE_FILE = "BASE SOAT.xlsx"
+USUARIOS = "usuarios.xlsx"
+SHEET_NAME_USERS = "USERS"
 QR_FOLDER = os.path.join(os.getcwd(), 'static', 'qr_codes')
 SHEET_NAME = "BASE"
+
+def login_required(f):
+    """
+    Decorador para proteger rutas que requieren autenticación.
+    Verifica que 'username' esté en la sesión. Si no, redirige al login.
+    """
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if 'username' not in session:
+            flash("Debes iniciar sesión para acceder a esta página.")
+            return redirect(url_for('login'))
+        return f(*args, **kwargs)
+    return decorated_function
 
 def calcular_estado(soat, tecnomecanica):
     """Determina si el estado es 'Activo' o 'Inactivo' según las fechas del SOAT y la tecnomecánica."""
@@ -33,11 +49,14 @@ def obtener_nuevo_id(df):
     return 8000000
 
 def init_routes(app):
-    @app.route('/')
+    @app.route('/index')
     def index():
+        if 'username' not in session:
+            return redirect(url_for('login'))
         return render_template('index.html')
 
     @app.route('/registrar', methods=['GET', 'POST'])
+    @login_required
     def registrar():
         if request.method == 'POST':
             # Obtener datos del formulario
@@ -63,9 +82,9 @@ def init_routes(app):
                 df = pd.read_excel(DATABASE_FILE, sheet_name=SHEET_NAME, dtype=str)
             except (FileNotFoundError, ValueError):
                 df = pd.DataFrame(columns=["ID", "ESTADO", "CEDULA", "NOMBRES Y APELLIDOS", "EMPRESA", 
-                                           "TIPO DE TRANSPORTE", "PLACA", "TARJETA DE PROPIEDAD", 
-                                           "CATEGORIA(S)", "FECHA DE VENCIMIENTO", "SOAT", 
-                                           "TECNOMECANICA", "OBSERVACIONES"])
+                                        "TIPO DE TRANSPORTE", "PLACA", "TARJETA DE PROPIEDAD", 
+                                        "CATEGORIA(S)", "FECHA DE VENCIMIENTO", "SOAT", 
+                                        "TECNOMECANICA", "OBSERVACIONES"])
 
             # Verificar si la cédula ya existe
             if cedula in df["CEDULA"].astype(str).values:
@@ -114,11 +133,13 @@ def init_routes(app):
         return render_template('register.html', qr_path=None)
 
     @app.route('/validar_qr')
+    @login_required
     def validar_qr():
         """Página para escanear y validar códigos QR."""
         return render_template('validar_qr.html')
 
     @app.route('/procesar_qr', methods=['POST'])
+    @login_required
     def procesar_qr():
         """Procesa el QR recibido y valida el estado en la base de datos."""
         try:
@@ -179,6 +200,7 @@ def init_routes(app):
         return '.' in filename and filename.rsplit('.', 1)[1].lower() in ['xls', 'xlsx']
     
     @app.route('/cargue_masivo', methods=['POST'])
+    @login_required
     def cargue_masivo():
         # Verificar que se haya enviado el archivo
         if 'documento' not in request.files:
@@ -296,6 +318,7 @@ def init_routes(app):
         return redirect(url_for('index'))
     
     @app.route('/usuarios')
+    @login_required
     def mostrar_usuarios():
         try:
             # Leer el archivo Excel
@@ -309,16 +332,71 @@ def init_routes(app):
             return f"Error al leer el archivo: {str(e)}"
 
     @app.route('/modificar_usuario')
+    @login_required
     def modificar_usuario():
         return render_template('modificar_usuario.html')
 
 
     @app.route('/eliminar_usuario/<int:id>', methods=['POST'])
+    @login_required
     def eliminar_usuario(id):
         try:
             df = pd.read_excel(DATABASE_FILE)
+            usuario = df[df['ID'] == id]
+            if not usuario.empty:
+                cedula = usuario.iloc[0]['CEDULA']  # Obtener la cédula del usuario
+                qr_path = os.path.join(QR_FOLDER, f"{cedula}.png")
+                if os.path.exists(qr_path):
+                    os.remove(qr_path)  # Eliminar el archivo QR
             df = df[df['ID'] != id]  # Filtrar el usuario a eliminar
             df.to_excel(DATABASE_FILE, index=False)  # Guardar cambios en el archivo Excel
             return redirect(url_for('mostrar_usuarios'))
         except Exception as e:
-            return f"Error al eliminar el usuario: {str(e)}"
+            return f"Error al eliminar el usuario y su código QR: {str(e)}"
+        
+    def load_users():
+        try:
+            # Lee el archivo Excel especificando la hoja 'USERS'
+            df = pd.read_excel("usuarios.xlsx", sheet_name="USERS")
+            print("Columnas encontradas:", df.columns.tolist())
+            
+            # Verifica que existan las columnas 'username' y 'password'
+            if 'username' not in df.columns or 'password' not in df.columns:
+                print("Error: Las columnas 'username' y/o 'password' no se encontraron en el archivo Excel.")
+                return {}
+            
+            # Convierte el DataFrame a un diccionario
+            users = dict(zip(df['username'], df['password']))
+            return users
+        except Exception as e:
+            print("Error al leer el archivo Excel:", e)
+            return {}
+
+    # Cargar los usuarios al iniciar la aplicación
+    users = load_users()
+    print("Usuarios cargados:", users)
+
+    @app.route('/', methods=['GET', 'POST'])
+    def login():
+        if request.method == 'POST':
+            # Al comparar las credenciales, eliminamos espacios en blanco:
+            username_input = request.form.get('username').strip()
+            password_input = request.form.get('password').strip()
+
+            # Asegúrate de que en el diccionario de usuarios también se eliminen los espacios:
+            if username_input in users:
+                stored_password = str(users[username_input]).strip()
+                if stored_password == password_input:
+                    session['username'] = username_input
+                    return redirect(url_for('index'))
+                else:
+                    flash("Usuario o contraseña incorrectos.")
+            else:
+                flash("Usuario o contraseña incorrectos.")
+        return render_template('login.html')
+
+    @app.route('/logout')
+    @login_required
+    def logout():
+        session.pop('username', None)
+        return redirect(url_for('login'))
