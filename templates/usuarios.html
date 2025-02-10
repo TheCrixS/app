@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Usuarios Registrados</title>
+  <link rel="icon" href="{{ url_for('static', filename='logo-ts3.png') }}" type="image/x-icon">
+  <style>
+    :root {
+      --primary-color: #071C23;
+      --secondary-color: #FF914D;
+      --background-color: #F9F9F9;
+      --text-color: #333333;
+      --accent-color: #FF914D;
+    }
+
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: url('../static/palma.jpg') no-repeat center center fixed;
+      background-size: cover;
+      color: var(--text-color);
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+
+    header {
+      background-color: rgba(7, 28, 35, 0.9);
+      color: white;
+      padding: 1rem;
+      text-align: center;
+    }
+
+    .legal {
+      font-size: 0.8rem;
+    }
+
+    footer {
+      background-color: rgba(7, 28, 35, 0.9);
+      color: white;
+      text-align: center;
+      padding: 1rem;
+      margin-top: auto;
+    }
+
+    .back-button {
+      position: absolute;
+      top: 50%;
+      left: 1rem;
+      transform: translateY(-50%);
+      color: white;
+      background-color: var(--primary-color);
+      padding: 0.8rem 1.5rem;
+      text-decoration: none;
+      border-radius: 5px;
+      font-size: 1rem;
+      transition: background-color 0.3s ease;
+    }
+
+    .container {
+        background: rgba(255, 255, 255, 0.9);
+        padding: 20px;
+        border-radius: 10px;
+        margin: 50px auto;
+        width: 80%;
+        box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.2);
+    }
+    
+    header {
+        background-color: rgba(7, 28, 35, 0.9);
+        color: white;
+        padding: 1rem;
+        text-align: center;
+        box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+        position: relative;
+    }
+
+    .container {
+        background: rgba(255, 255, 255, 0.9);
+        padding: 20px;
+        border-radius: 10px;
+        margin: 50px auto;
+        width: 80%;
+        box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.2);
+    }
+
+    .table-container {
+      width: 100%;
+      overflow-x: auto;
+      overflow-y: auto;
+      max-height: 500px;
+    }
+
+    h1 {
+      color: var(--primary-color);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 1rem;
+      background-color: white;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.2);
+    }
+
+    th, td {
+      border: 1px solid #ddd;
+      padding: 8px;
+      text-align: left;
+    }
+
+    th {
+      background-color: var(--primary-color);
+      color: white;
+    }
+
+    tr:nth-child(even) {
+      background-color: #f2f2f2;
+    }
+
+    .btn {
+      padding: 5px 10px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      margin: 2px;
+    }
+
+    .btn-edit {
+      background-color: #6C63FF;
+      color: white;
+    }
+
+    .btn-delete {
+      background-color: #FF414D;
+      color: white;
+    }
+    .btn-qr {
+      background-color: #FFA500;
+      color: white;
+    }
+    .modal {
+        display: none;
+        position: fixed;
+        z-index: 1000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+        align-items: center;
+        justify-content: center;
+    }
+    .modal-content {
+        background-color: #fff;
+        padding: 20px;
+        border-radius: 10px;
+        text-align: center;
+        width: 300px;
+        position: relative;
+    }
+
+    .close-button {
+        position: absolute;
+        top: 10px;
+        right: 20px;
+        font-size: 24px;
+        font-weight: bold;
+        cursor: pointer;
+    }
+    .filter-container {
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .filter-container label {
+      font-size: 1rem;
+      font-weight: bold;
+      color: var(--primary-color);
+      margin-right: 10px;
+    }
+
+    .filter-container input {
+      width: 40%;
+      padding: 8px;
+      border: 2px solid var(--primary-color);
+      border-radius: 8px;
+      font-size: 0.9rem;
+      text-align: center;
+      transition: all 0.3s ease-in-out;
+    }
+
+    .filter-container input:focus {
+      border-color: var(--secondary-color);
+      outline: none;
+      box-shadow: 0px 0px 10px rgba(255, 145, 77, 0.5);
+    }
+    .modal-buttons {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      width: 100%;
+    }
+
+    .modal-buttons a {
+      padding: 0.8rem 1.5rem;
+      color: white;
+      background-color: var(--accent-color);
+      text-decoration: none;
+      text-align: center;
+      border-radius: 5px;
+      font-size: 1rem;
+      transition: background-color 0.3s ease;
+      flex-grow: 1;
+      max-width: 120px;
+      display: inline-block;
+    }
+
+    .modal-buttons a:hover {
+      background-color: #5643d6;
+    }
+    /* Estilo del Modal */
+    .modalEDIT {
+        display: none;
+        position: fixed;
+        z-index: 1000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+        align-items: center;
+        justify-content: center;
+    }
+
+    /* Contenido del Modal */
+    .modal-contentEDIT {
+        background-color: rgba(255, 255, 255, 0.95);
+        padding: 25px;
+        border-radius: 10px;
+        width: 400px;
+        max-width: 90%;
+        box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.3);
+        position: relative;
+        text-align: center;
+    }
+
+    /* Botón para cerrar el modal */
+    .close-buttonEDIT {
+        position: absolute;
+        top: 15px;
+        right: 20px;
+        font-size: 24px;
+        font-weight: bold;
+        cursor: pointer;
+        color: var(--primary-color);
+    }
+
+    /* Estilo del Formulario en el Modal */
+    .modal-form-group {
+        display: flex;
+        flex-direction: column;
+        margin-bottom: 10px;
+        text-align: left;
+    }
+
+    .modal-form-group label {
+        font-size: 0.9rem;
+        font-weight: bold;
+        color: var(--primary-color);
+    }
+
+    .modal-form-group input, .modal-form-group textarea, .modal-form-group select {
+        padding: 8px;
+        border: 2px solid var(--primary-color);
+        border-radius: 8px;
+        font-size: 0.9rem;
+        text-align: left;
+        transition: all 0.3s ease-in-out;
+        width: 100%;
+    }
+
+    .modal-form-group input:focus, 
+    .modal-form-group textarea:focus, 
+    .modal-form-group select:focus {
+        border-color: var(--secondary-color);
+        outline: none;
+        box-shadow: 0px 0px 10px rgba(255, 145, 77, 0.5);
+    }
+
+    /* Botones del modal */
+    .modal-buttons {
+        display: flex;
+        justify-content: space-between;
+        gap: 10px;
+    }
+
+    .btn-save {
+        padding: 10px;
+        background-color: var(--accent-color);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-size: 1rem;
+        cursor: pointer;
+        width: 48%;
+    }
+
+    .btn-cancel {
+        padding: 10px;
+        background-color: #ccc;
+        color: var(--text-color);
+        border: none;
+        border-radius: 8px;
+        font-size: 1rem;
+        cursor: pointer;
+        width: 48%;
+    }
+
+    .btn-save:hover {
+        background-color: #FF7600;
+    }
+
+    .btn-cancel:hover {
+        background-color: #b3b3b3;
+    }
+  </style>
+    <script>
+        function confirmarEliminacion(event) {
+          if (!confirm("¿Estás seguro de que deseas eliminar este usuario?")) {
+            event.preventDefault();
+          }
+        }
+        function filtrarTabla() {
+            var input, filtro, tabla, tr, td, i, j, txtValor;
+            input = document.getElementById("search");
+            filtro = input.value.toUpperCase();
+            tabla = document.getElementById("tablaUsuarios");
+            tr = tabla.getElementsByTagName("tr");
+
+            for (i = 1; i < tr.length; i++) {
+                tr[i].style.display = "none";
+                td = tr[i].getElementsByTagName("td");
+                for (j = 0; j < td.length; j++) {
+                if (td[j]) {
+                    txtValor = td[j].textContent || td[j].innerText;
+                    if (txtValor.toUpperCase().indexOf(filtro) > -1) {
+                    tr[i].style.display = "";
+                    break;
+                    }
+                }
+                }
+            }
+        }
+      </script>
+</head>
+
+<body>
+  <header>
+    <h1>
+        <a href="{{ url_for('index') }}">
+          <img src="../static/logo-ts3.png" alt="TS3+ Logo" class="header-logo">
+        </a>
+    </h1>
+    <a class="back-button" href="{{ url_for('index') }}">Volver al Menú Principal</a>
+  </header>
+  <main>
+    <div class="container">
+        <div class="filter-container">
+            <label for="search">Buscar:</label>
+            <input type="text" id="search" onkeyup="filtrarTabla()" placeholder="🔍 Buscar...">
+        </div>
+        <div class="table-container">
+            <table id="tablaUsuarios">
+                <thead>
+                  <tr>
+                    {% if usuarios %}
+                      {% for col in usuarios[0].keys() %}
+                        <th>{{ col }}</th>
+                      {% endfor %}
+                      <th>Acciones</th>
+                    {% else %}
+                      <th>No hay usuarios registrados</th>
+                    {% endif %}
+                  </tr>
+                </thead>
+                <tbody>
+                  {% if usuarios %}
+                    {% for usuario in usuarios %}
+                    <tr>
+                      {% for value in usuario.values() %}
+                        <td>{{ value }}</td>
+                      {% endfor %}
+                      <td>
+                        <button class="btn btn-edit" >Editar</button>                            
+                        <button class="btn-qr" onclick="mostrarQR('{{usuario.CEDULA}}')">Ver QR</button>
+                        <form action="{{ url_for('eliminar_usuario', id=usuario['ID']) }}" method="post" style="display:inline;" onsubmit="confirmarEliminacion(event)">
+                          <button type="submit" class="btn btn-delete">Eliminar</button>
+                        </form>
+                      </td>
+                    </tr>
+                    {% endfor %}
+                  {% endif %}
+                </tbody>
+              </table>
+        </div>
+    </div>
+    <!-- Modal para Ver QR -->
+    <div id="modalQR" class="modal">
+        <div class="modal-content">
+            <span class="close-button" onclick="closeModal()">×</span>
+            <h2>Código QR</h2>
+            <img id="qrImage" src="" alt="Código QR">
+            <div class="modal-buttons">
+                <!-- El href se actualiza dinámicamente con JavaScript -->
+                <a href="#" onclick="imprimirQR(); return false;">Imprimir</a>
+            </div>
+        </div>
+    </div>
+  </main>
+  <footer>
+    <p>&copy; 2025 TS3+. Todos los derechos reservados.</p>
+    <p class="legal">Esta página cumple con las normativas actuales de protección de datos y accesibilidad. Para más información, consulta nuestra <a href="#" style="color: var(--secondary-color);">política de privacidad</a>.</p>
+  </footer>
+  <script>
+        function mostrarQR(cedula) {
+            document.getElementById("qrImage").src = "../static/qr_codes/"+cedula+".png";
+            document.getElementById("modalQR").style.display = "flex";
+        }
+
+        function closeModal() {
+            document.getElementById("modalQR").style.display = "none";
+        }
+        function imprimirQR() {
+            // Obtener la URL del QR a partir del atributo src de la imagen en el modal
+            var qrSrc = document.getElementById("qrImage").src;
+            // Abrir una nueva ventana
+            var ventana = window.open("", "_blank");
+
+            // Escribir el contenido HTML con la imagen centrada y con un tamaño mayor
+            ventana.document.write(`
+                <html>
+                    <head>
+                        <title>Imprimir QR</title>
+                        <style>
+                            /* Se utiliza Flexbox para centrar el contenido */
+                            body {
+                                margin: 0;
+                                padding: 0;
+                                display: flex;
+                                justify-content: center;
+                                align-items: center;
+                                height: 100vh;
+                                background-color: #fff;
+                            }
+                            /* Estilos para la imagen del QR */
+                            img {
+                                max-width: 80%;  /* Ajusta este valor para agrandar o reducir el tamaño */
+                                height: auto;
+                                display: block;
+                            }
+                        </style>
+                    </head>
+                    <body>
+                        <img id="imgQR" src="${qrSrc}" alt="Código QR">
+                    </body>
+                </html>
+            `);
+            ventana.document.close();
+
+            // Esperar a que la imagen se cargue para ejecutar el print
+            var img = ventana.document.getElementById("imgQR");
+            img.onload = function() {
+                ventana.print();
+                ventana.close();
+            };
+
+            // En caso de cache, forzar el print con un pequeño retraso
+            setTimeout(function(){
+                if (!img.complete) return;
+                ventana.print();
+                ventana.close();
+            }, 500);
+        }
+  </script>
+</body>
+</html>

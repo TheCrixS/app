@@ -294,32 +294,31 @@ def init_routes(app):
         
         flash('Cargue completado exitosamente.', 'Success')
         return redirect(url_for('index'))
-   
+    
+    @app.route('/usuarios')
+    def mostrar_usuarios():
+        try:
+            # Leer el archivo Excel
+            df = pd.read_excel(DATABASE_FILE)
+            
+            # Convertir DataFrame a lista de diccionarios para pasarlo a la plantilla
+            usuarios = df.to_dict(orient='records')
+            
+            return render_template('usuarios.html', usuarios=usuarios)
+        except Exception as e:
+            return f"Error al leer el archivo: {str(e)}"
+
     @app.route('/modificar_usuario')
     def modificar_usuario():
         return render_template('modificar_usuario.html')
 
-    @app.route('/get_users')
-    def get_users():
+
+    @app.route('/eliminar_usuario/<int:id>', methods=['POST'])
+    def eliminar_usuario(id):
         try:
-            df = pd.read_excel(DATABASE_FILE, sheet_name=SHEET_NAME, dtype=str)
-            users = df.to_dict(orient="records")
-            return jsonify(users)
+            df = pd.read_excel(DATABASE_FILE)
+            df = df[df['ID'] != id]  # Filtrar el usuario a eliminar
+            df.to_excel(DATABASE_FILE, index=False)  # Guardar cambios en el archivo Excel
+            return redirect(url_for('mostrar_usuarios'))
         except Exception as e:
-            return jsonify({"error": str(e)})
-
-    @app.route('/delete_user', methods=['POST'])
-    def delete_user():
-        try:
-            data = request.get_json()
-            cedula = data.get("cedula")
-
-            df = pd.read_excel(DATABASE_FILE, sheet_name=SHEET_NAME, dtype=str)
-            df = df[df["CEDULA"] != cedula]  # Filtramos el usuario a eliminar
-
-            with pd.ExcelWriter(DATABASE_FILE, engine="openpyxl", mode="w") as writer:
-                df.to_excel(writer, sheet_name=SHEET_NAME, index=False)
-
-            return jsonify({"message": "Usuario eliminado correctamente."})
-        except Exception as e:
-            return jsonify({"error": str(e)})
+            return f"Error al eliminar el usuario: {str(e)}"
