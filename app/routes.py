@@ -28,6 +28,17 @@ def login_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
+def roles_required(*roles):
+    def decorator(f):
+        @wraps(f)
+        def decorated_function(*args, **kwargs):
+            if 'role' not in session or session['role'] not in roles:
+                flash("No tienes permisos para acceder a esta página.")
+                return redirect(url_for('menu'))
+            return f(*args, **kwargs)
+        return decorated_function
+    return decorator
+
 def calcular_estado(soat, tecnomecanica):
     """Determina si el estado es 'Activo' o 'Inactivo' según las fechas del SOAT y la tecnomecánica."""
     try:
@@ -57,6 +68,7 @@ def init_routes(app):
 
     @app.route('/registrar', methods=['GET', 'POST'])
     @login_required
+    @roles_required('admin')
     def registrar():
         if request.method == 'POST':
             # Obtener datos del formulario
@@ -134,12 +146,14 @@ def init_routes(app):
 
     @app.route('/validar_qr')
     @login_required
+    @roles_required('admin','validador')
     def validar_qr():
         """Página para escanear y validar códigos QR."""
         return render_template('validar_qr.html')
 
     @app.route('/procesar_qr', methods=['POST'])
     @login_required
+    @roles_required('admin','validador')
     def procesar_qr():
         """Procesa el QR recibido y valida el estado en la base de datos."""
         try:
@@ -201,6 +215,7 @@ def init_routes(app):
     
     @app.route('/cargue_masivo', methods=['POST'])
     @login_required
+    @roles_required('admin')
     def cargue_masivo():
         # Verificar que se haya enviado el archivo
         if 'documento' not in request.files:
@@ -336,6 +351,7 @@ def init_routes(app):
 
     @app.route('/eliminar_usuario/<int:id>', methods=['POST'])
     @login_required
+    @roles_required('admin')
     def eliminar_usuario(id):
         try:
             df = pd.read_excel(DATABASE_FILE)
@@ -354,15 +370,22 @@ def init_routes(app):
     def load_users():
         try:
             # Lee el archivo Excel especificando la hoja 'USERS'
-            df = pd.read_excel("usuarios.xlsx", sheet_name="USERS")
-            
-            # Verifica que existan las columnas 'username' y 'password'
-            if 'username' not in df.columns or 'password' not in df.columns:
-                print("Error: Las columnas 'username' y/o 'password' no se encontraron en el archivo Excel.")
-                return {}
-            
-            # Convierte el DataFrame a un diccionario
-            users = dict(zip(df['username'], df['password']))
+            df = pd.read_excel(USUARIOS, sheet_name=SHEET_NAME_USERS)
+                    
+            # Verifica que existan las columnas 'username', 'password' y 'role'
+            required_cols = ['username', 'password', 'role']
+            for col in required_cols:
+                if col not in df.columns:
+                    print(f"Error: La columna '{col}' no se encontró en el archivo Excel.")
+                    return {}
+                    
+            users = {
+                str(username).strip(): {
+                    "password": str(password).strip(),
+                    "role": str(role).strip()
+                }
+                for username, password, role in zip(df['username'], df['password'], df['role'])
+            }
             return users
         except Exception as e:
             print("Error al leer el archivo Excel:", e)
@@ -380,9 +403,10 @@ def init_routes(app):
 
             # Asegúrate de que en el diccionario de usuarios también se eliminen los espacios:
             if username_input in users:
-                stored_password = str(users[username_input]).strip()
+                stored_password = str(users[username_input]['password']).strip()
                 if stored_password == password_input:
                     session['username'] = username_input
+                    session['role'] = users[username_input]['role']
                     return redirect(url_for('index'))
                 else:
                     flash("Usuario o contraseña incorrectos.")
@@ -398,6 +422,7 @@ def init_routes(app):
     
     @app.route('/editar_usuario', methods=['POST'])
     @login_required
+    @roles_required('admin')
     def editar_usuario():
         # Obtener el ID del usuario desde el formulario (campo oculto)
         user_id = request.form.get('id')
@@ -465,4 +490,4 @@ def init_routes(app):
             flash("Error al guardar los cambios en el Excel: " + str(e), "error")
             return render_template('usuarios.html')
         
-        return redirect(url_for('index'))
+        return redirect(url_for('mostrar_usuarios'))

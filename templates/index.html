@@ -179,11 +179,14 @@
   <main>
     <h2>Elige una opción</h2>
     <div class="options">
-      <a class="option" href="{{ url_for('registrar') }}">Registrar Usuario</a>
-      <a class="option" href="{{ url_for('mostrar_usuarios') }}">Usuarios Registrados</a>
-      <a class="option" href="{{ url_for('validar_qr') }}">Ingreso de Vehículo</a>
-      <!-- Se asigna un ID al enlace para abrir el modal -->
-      <a class="option" href="#" id="btnCargueMasivo">Cargue de usuarios</a>
+      {% if session.role == 'admin'%}
+        <a class="option" href="{{ url_for('registrar') }}">Registrar Usuario</a>
+        <a class="option" href="{{ url_for('mostrar_usuarios') }}">Usuarios Registrados</a>
+        <a class="option" href="#" id="btnCargueMasivo">Cargue de usuarios</a>
+      {% endif %}
+      {% if session.role in ['admin', 'validador']%}
+        <a class="option" href="{{ url_for('validar_qr') }}">Ingreso de Vehículo</a>
+      {% endif %}
     </div>
   </main>
 
