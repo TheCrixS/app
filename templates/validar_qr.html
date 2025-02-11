@@ -1,211 +1,250 @@
 <!DOCTYPE html>
 <html lang="es">
-
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Validación de QR - TS3+">
-    <meta name="author" content="TS3+">
-    <meta name="keywords" content="TS3+, QR, validación, acceso">
-    <link rel="icon" href="favicon.ico" type="image/x-icon">
-    <title>Validar Ingreso</title>
-    <script src="https://unpkg.com/html5-qrcode/minified/html5-qrcode.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
-    <link rel="icon" href="{{ url_for('static', filename='logo-ts3.png') }}" type="image/x-icon">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Validación de QR - TS3+">
+  <meta name="author" content="TS3+">
+  <meta name="keywords" content="TS3+, QR, validación, acceso">
+  <link rel="icon" href="favicon.ico" type="image/x-icon">
+  <title>Validar Ingreso</title>
+  <!-- Librerías para el escáner QR -->
+  <script src="https://unpkg.com/html5-qrcode/minified/html5-qrcode.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+  <link rel="icon" href="{{ url_for('static', filename='logo-ts3.png') }}" type="image/x-icon">
 
-    <!-- Estilos -->
-    <style>
-        :root {
-            --primary-color: #071C23;
-            --secondary-color: #FF914D;
-            --success-bg: rgba(0, 128, 0, 0.3);
-            --error-bg: rgba(255, 0, 0, 0.3);
-            --background-color: #F9F9F9;
-            --text-color: #333;
-        }
+  <!-- Estilos -->
+  <style>
+    :root {
+      --primary-color: #071C23;
+      --secondary-color: #FF914D;
+      --success-bg: rgba(0, 128, 0, 0.3);
+      --error-bg: rgba(255, 0, 0, 0.3);
+      --background-color: #F9F9F9;
+      --text-color: #333;
+    }
 
-        body {
-            margin: 0;
-            font-family: Arial, sans-serif;
-            background: url('../static/palma.jpg') no-repeat center center fixed;
-            background-size: cover;
-            color: var(--text-color);
-            display: flex;
-            flex-direction: column;
-            min-height: 100vh;
-            transition: background-color 0.5s ease;
-        }
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      /* Imagen de fondo */
+      background: url('../static/palma.jpg') no-repeat center center fixed;
+      background-size: cover;
+      /* Se mezcla el color con la imagen */
+      background-blend-mode: overlay;
+      color: var(--text-color);
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+      /* Se define la transición para el cambio de color cuando se desvanecerá */
+      transition: background-color 5s ease;
+    }
 
-        header {
-            display: flex;
-            background-color: rgba(7, 28, 35, 0.9);
-            color: white;
-            padding: 1rem;
-            text-align: center;
-            box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
-        }
+    header {
+      display: flex;
+      background-color: rgba(7, 28, 35, 0.9);
+      color: white;
+      padding: 1rem;
+      text-align: center;
+      box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+    }
 
-        /* Contenedor para los botones: se ubican al inicio (izquierda) y se separan del logo */
-        .button-container {
-            display: flex;
-            align-items: center;
-            gap: 1rem;      /* Espacio entre botones */
-            margin-left: auto; /* Esto empuja el siguiente elemento (logo) hacia la derecha */
-        }
+    .button-container {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin-left: auto;
+    }
 
-        /* Estilos para los botones */
-        .back-button {
-            color: white;
-            background-color: var(--secondary-color); /* Tono naranjado */
-            padding: 0.8rem 1.5rem;
-            text-decoration: none;
-            border-radius: 5px;
-            font-size: 1rem;
-            transition: background-color 0.3s ease;
-            display: inline-block;
-        }
+    .back-button {
+      color: white;
+      background-color: var(--secondary-color);
+      padding: 0.8rem 1.5rem;
+      text-decoration: none;
+      border-radius: 5px;
+      font-size: 1rem;
+      transition: background-color 0.3s ease;
+      display: inline-block;
+    }
 
-        .back-button:hover {
-            background-color: #ff7c2b; /* Variante de hover en naranja */
-        }
-        .logo-link {
-            margin-right: auto; /* Empuja el logo al lado derecho */
-        }
+    .back-button:hover {
+      background-color: #ff7c2b;
+    }
 
-        .header-logo {
-        /* Ajusta el tamaño que desees */
-            height: 80px;  /* O el tamaño que prefieras */
-            width: auto;   /* Mantiene la proporción del logo */
-        }
+    .logo-link {
+      margin-right: auto;
+    }
 
-        main {
-            display: flex;
-            gap: 2rem;
-            flex: 1;
-            padding: 2rem;
-            backdrop-filter: blur(5px);
-            background-color: rgba(255, 255, 255, 0.8);
-            margin: 2rem auto;
-            max-width: 1200px;
-            border-radius: 10px;
-            box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.2);
-        }
+    .header-logo {
+      height: 80px;
+      width: auto;
+    }
 
-        .result-container {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            padding: 2rem;
-            border-radius: 10px;
-            text-align: center;
-            font-size: 1.2rem;
-            font-weight: bold;
-        }
+    /* Contenedor principal similar a un modal */
+    main {
+      display: flex;
+      gap: 2rem;
+      flex: 1;
+      padding: 2rem;
+      backdrop-filter: blur(5px);
+      background-color: rgba(255, 255, 255, 0.8);
+      margin: 2rem auto;
+      max-width: 1200px;
+      border-radius: 10px;
+      box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.2);
+    }
 
-        .qr-container {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            background-color: rgba(7, 28, 35, 0.9);
-            color: white;
-            padding: 2rem;
-            border-radius: 10px;
-            box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.2);
-            width: 50%;
-        }
+    /* Contenedor de la cámara (lado izquierdo, mayor tamaño) */
+    .qr-container {
+      flex: 2;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background-color: rgba(7, 28, 35, 0.9);
+      color: white;
+      padding: 2rem;
+      border-radius: 10px;
+      box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.2);
+    }
 
-        #qr-reader {
-            width: 100%;
-            max-width: 400px;
-            height: auto;
-        }
+    /* Contenedor de los datos (lado derecho) */
+    .result-container {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: flex-start;
+      padding: 2rem;
+      border-radius: 10px;
+      font-size: 1.2rem;
+      font-weight: bold;
+      background-color: #fff;
+      box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.2);
+    }
 
-        footer {
-            background-color: rgba(7, 28, 35, 0.9);
-            color: white;
-            text-align: center;
-            padding: 1rem;
-        }
-    </style>
+    /* Ajuste del lector QR para que sea más grande */
+    #qr-reader {
+      width: 100%;
+      max-width: none;
+      height: 500px;
+    }
+
+    footer {
+      background-color: rgba(7, 28, 35, 0.9);
+      color: white;
+      text-align: center;
+      padding: 1rem;
+    }
+  </style>
 </head>
-
 <body>
-    <header>
-        <a href="{{ url_for('index') }}">
-            <img src="../static/logo-ts3.png" alt="TS3+ Logo" class="header-logo">
-        </a>
-        <div class="button-container">
-            <a class="back-button" href="{{ url_for('index') }}">Volver al Menú Principal</a>
-            <a class="back-button" href="{{ url_for('logout') }}">Cerrar sesión</a>
-        </div>
-    </header>
+  <header>
+    <a href="{{ url_for('index') }}">
+      <img src="../static/logo-ts3.png" alt="TS3+ Logo" class="header-logo">
+    </a>
+    <div class="button-container">
+      <a class="back-button" href="{{ url_for('index') }}">Volver al Menú Principal</a>
+      <a class="back-button" href="{{ url_for('logout') }}">Cerrar sesión</a>
+    </div>
+  </header>
 
-    <main>
-        <div class="result-container" id="result-container">
-            <p id="result">Esperando escaneo...</p>
-        </div>
+  <main>
+    <!-- Cámara a la izquierda -->
+    <div class="qr-container">
+      <h2>Escanear Código QR</h2>
+      <div id="qr-reader"></div>
+      <button id="cambiarCamara">Cambiar Cámara</button>
+    </div>
 
-        <div class="qr-container">
-            <h2>Escanear Código QR</h2>
-            <div id="qr-reader"></div>
-            <button id="cambiarCamara">Cambiar Cámara</button>
-        </div>
-    </main>
+    <!-- Datos del endpoint a la derecha -->
+    <div class="result-container" id="result-container">
+      <p id="result">Esperando escaneo...</p>
+    </div>
+  </main>
 
-    <footer>
-        <p>&copy; 2025 TS3+. Todos los derechos reservados.</p>
-    </footer>
+  <footer>
+    <p>&copy; 2025 TS3+. Todos los derechos reservados.</p>
+  </footer>
 
-    <script>
-        let qrScanner;
-        let dispositivos = [];
-        let dispositivoActual = 0;
+  <script>
+    let qrScanner;
+    let dispositivos = [];
+    let dispositivoActual = 0;
 
-        function onScanSuccess(decodedText) {
-            console.log("Código QR detectado:", decodedText);
-            document.getElementById("result").innerText = "Código escaneado: " + decodedText;
-            
-            fetch('/procesar_qr', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ qr_data: decodedText })
-            })
-            .then(response => response.json())
-            .then(data => {
-                document.getElementById("result").innerText = data.message;
-                document.body.style.backgroundColor = data.status === 'permitido' ? 'var(--success-bg)' : 'var(--error-bg)';
-            })
-            .catch(error => console.error("Error:", error));
+    function aplicarOverlay(color) {
+      // Deshabilitar la transición para que el color se aplique de inmediato
+      document.body.style.transition = 'none';
+      document.body.style.backgroundColor = color;
+      // Forzar reflow para asegurarse de que se aplique el cambio inmediatamente
+      void document.body.offsetWidth;
+      // Volver a habilitar la transición para el fade-out de 5 segundos
+      document.body.style.transition = 'background-color 5s ease';
+      // Iniciar el fade-out: se quita el color (queda vacío) y se desvanece en 5 segundos
+      setTimeout(() => { document.body.style.backgroundColor = ''; }, 0);
+    }
+
+    function onScanSuccess(decodedText) {
+      console.log("Código QR detectado:", decodedText);
+      document.getElementById("result").innerHTML = "<p>Código escaneado: " + decodedText + "</p>";
+
+      fetch('/procesar_qr', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ qr_data: decodedText })
+      })
+      .then(response => response.json())
+      .then(data => {
+        let resultContainer = document.getElementById("result");
+        let message = data.message;
+        if (data.data) {
+          let details = data.data;
+          resultContainer.innerHTML = `<p>${message}</p>
+            <ul>
+              <li><strong>ID:</strong> ${details.ID}</li>
+              <li><strong>Cédula:</strong> ${details.Cédula}</li>
+              <li><strong>Nombre:</strong> ${details.Nombre}</li>
+              <li><strong>Placa:</strong> ${details.Placa}</li>
+              <li><strong>Estado:</strong> ${details.Estado}</li>
+            </ul>`;
+        } else {
+          resultContainer.innerHTML = `<p>${message}</p>`;
         }
-
-        async function iniciarEscaner() {
-            dispositivos = await Html5Qrcode.getCameras();
-            if (dispositivos.length === 0) {
-                document.getElementById("result").innerText = "No se encontraron cámaras.";
-                return;
-            }
-            const cameraId = dispositivos[dispositivoActual].id;
-            qrScanner = new Html5Qrcode("qr-reader");
-            qrScanner.start(cameraId, { fps: 10, qrbox: 300 }, onScanSuccess);
+        // Si se permite o se deniega el acceso, se aplica el overlay de color inmediatamente
+        if (message.includes("permitido")) {
+          aplicarOverlay('rgba(0, 128, 0, 0.3)');
+        } else if (message.includes("denegado")) {
+          aplicarOverlay('rgba(255, 0, 0, 0.3)');
+        } else {
+          document.body.style.backgroundColor = '';
         }
+      })
+      .catch(error => console.error("Error:", error));
+    }
 
-        async function cambiarCamara() {
-            if (dispositivos.length < 2) {
-                alert('No hay suficientes cámaras disponibles.');
-                return;
-            }
-            await qrScanner.stop();
-            dispositivoActual = (dispositivoActual + 1) % dispositivos.length;
-            iniciarEscaner();
-        }
+    async function iniciarEscaner() {
+      dispositivos = await Html5Qrcode.getCameras();
+      if (dispositivos.length === 0) {
+        document.getElementById("result").innerText = "No se encontraron cámaras.";
+        return;
+      }
+      const cameraId = dispositivos[dispositivoActual].id;
+      qrScanner = new Html5Qrcode("qr-reader");
+      qrScanner.start(cameraId, { fps: 10, qrbox: 300 }, onScanSuccess);
+    }
 
-        document.getElementById("cambiarCamara").addEventListener("click", cambiarCamara);
-        window.onload = iniciarEscaner;
-    </script>
+    async function cambiarCamara() {
+      if (dispositivos.length < 2) {
+        alert('No hay suficientes cámaras disponibles.');
+        return;
+      }
+      await qrScanner.stop();
+      dispositivoActual = (dispositivoActual + 1) % dispositivos.length;
+      iniciarEscaner();
+    }
+
+    document.getElementById("cambiarCamara").addEventListener("click", cambiarCamara);
+    window.onload = iniciarEscaner;
+  </script>
 </body>
-
 </html>

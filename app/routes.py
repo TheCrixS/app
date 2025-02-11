@@ -465,7 +465,6 @@ def init_routes(app):
         except (ValueError, TypeError):
             flash("El valor de Tarjeta de Propiedad debe ser numérico.", "error")
             return redirect(url_for('index'))
-        
         # Actualizar los campos editables (excluyendo 'ID' y 'ESTADO')
         df.at[idx, 'CEDULA'] = cedula_value
         df.at[idx, 'NOMBRES Y APELLIDOS'] = request.form.get('nombres')
@@ -479,6 +478,7 @@ def init_routes(app):
         df.at[idx, 'TECNOMECANICA'] = request.form.get('tecnomecanica')
         df['OBSERVACIONES'] = df['OBSERVACIONES'].astype(str)
         df.at[idx, 'OBSERVACIONES'] = request.form.get('observaciones')
+        df.at[idx, 'ESTADO'] = calcular_estado(request.form.get('soat'), request.form.get('tecnomecanica'))
 
         app.logger.debug(f"Actualizando usuario con ID {user_id_int} en la fila {idx}.")
         
