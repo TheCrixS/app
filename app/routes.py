@@ -355,7 +355,6 @@ def init_routes(app):
         try:
             # Lee el archivo Excel especificando la hoja 'USERS'
             df = pd.read_excel("usuarios.xlsx", sheet_name="USERS")
-            print("Columnas encontradas:", df.columns.tolist())
             
             # Verifica que existan las columnas 'username' y 'password'
             if 'username' not in df.columns or 'password' not in df.columns:
@@ -371,7 +370,6 @@ def init_routes(app):
 
     # Cargar los usuarios al iniciar la aplicación
     users = load_users()
-    print("Usuarios cargados:", users)
 
     @app.route('/', methods=['GET', 'POST'])
     def login():
@@ -399,6 +397,7 @@ def init_routes(app):
         return redirect(url_for('login'))
     
     @app.route('/editar_usuario', methods=['POST'])
+    @login_required
     def editar_usuario():
         # Obtener el ID del usuario desde el formulario (campo oculto)
         user_id = request.form.get('id')
@@ -428,18 +427,32 @@ def init_routes(app):
         
         # Obtener el índice de la fila a modificar
         idx = matching_rows.index[0]
+
+        # Convertir los campos que deben ser numéricos a int
+        try:
+            cedula_value = int(request.form.get('cedula'))
+        except (ValueError, TypeError):
+            flash("El valor de Cédula debe ser numérico.", "error")
+            return redirect(url_for('index'))
+        
+        try:
+            tarjeta_value = int(request.form.get('tarjeta'))
+        except (ValueError, TypeError):
+            flash("El valor de Tarjeta de Propiedad debe ser numérico.", "error")
+            return redirect(url_for('index'))
         
         # Actualizar los campos editables (excluyendo 'ID' y 'ESTADO')
-        df.at[idx, 'CEDULA'] = request.form.get('cedula')
+        df.at[idx, 'CEDULA'] = cedula_value
         df.at[idx, 'NOMBRES Y APELLIDOS'] = request.form.get('nombres')
         df.at[idx, 'EMPRESA'] = request.form.get('empresa')
         df.at[idx, 'TIPO DE TRANSPORTE'] = request.form.get('transporte')
         df.at[idx, 'PLACA'] = request.form.get('placa')
-        df.at[idx, 'TARJETA DE PROPIEDAD'] = request.form.get('tarjeta')
+        df.at[idx, 'TARJETA DE PROPIEDAD'] = tarjeta_value
         df.at[idx, 'CATEGORIA(S)'] = request.form.get('categoria')
         df.at[idx, 'FECHA DE VENCIMIENTO'] = request.form.get('vencimiento')
         df.at[idx, 'SOAT'] = request.form.get('soat')
         df.at[idx, 'TECNOMECANICA'] = request.form.get('tecnomecanica')
+        df['OBSERVACIONES'] = df['OBSERVACIONES'].astype(str)
         df.at[idx, 'OBSERVACIONES'] = request.form.get('observaciones')
 
         app.logger.debug(f"Actualizando usuario con ID {user_id_int} en la fila {idx}.")
