@@ -94,7 +94,6 @@
       box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.2);
     }
 
-    /* Contenedor de la cámara (lado izquierdo, mayor tamaño) */
     .qr-container {
       flex: 2;
       display: flex;
@@ -104,30 +103,34 @@
       background-color: rgba(7, 28, 35, 0.9);
       color: white;
       padding: 2rem;
-      border-radius: 10px;
+      border-radius: 20px;
       box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.2);
+      position: relative; /* Asegura que el botón no se desplace */
     }
 
-    /* Contenedor de los datos (lado derecho) */
-    .result-container {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: flex-start;
-      padding: 2rem;
-      border-radius: 10px;
-      font-size: 1.2rem;
-      font-weight: bold;
-      background-color: #fff;
-      box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.2);
-    }
-
-    /* Ajuste del lector QR para que sea más grande */
     #qr-reader {
       width: 100%;
-      max-width: none;
-      height: 500px;
+      max-width: 400px; /* Ajusta el ancho máximo */
+      height: 300px; /* Ajusta la altura del escáner */
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    #cambiarCamara {
+      margin-top: 15px; /* Espacio entre el escáner y el botón */
+      padding: 10px 20px;
+      font-size: 1rem;
+      background-color: var(--secondary-color);
+      border: none;
+      border-radius: 5px;
+      color: white;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+
+    #cambiarCamara:hover {
+      background-color: #ff7c2b;
     }
 
     footer {
@@ -150,16 +153,11 @@
   </header>
 
   <main>
-    <!-- Cámara a la izquierda -->
     <div class="qr-container">
       <h2>Escanear Código QR</h2>
       <div id="qr-reader"></div>
-      <button id="cambiarCamara">Cambiar Cámara</button>
-    </div>
-
-    <!-- Datos del endpoint a la derecha -->
-    <div class="result-container" id="result-container">
       <p id="result">Esperando escaneo...</p>
+      <button id="cambiarCamara">Cambiar Cámara</button>
     </div>
   </main>
 
@@ -173,16 +171,16 @@
     let dispositivoActual = 0;
 
     function aplicarOverlay(color) {
-      // Deshabilitar la transición para que el color se aplique de inmediato
+      // (Función para aplicar efectos visuales, sin cambios)
       document.body.style.transition = 'none';
       document.body.style.backgroundColor = color;
-      // Forzar reflow para asegurarse de que se aplique el cambio inmediatamente
       void document.body.offsetWidth;
-      // Volver a habilitar la transición para el fade-out de 5 segundos
       document.body.style.transition = 'background-color 5s ease';
-      // Iniciar el fade-out: se quita el color (queda vacío) y se desvanece en 5 segundos
       setTimeout(() => { document.body.style.backgroundColor = ''; }, 0);
     }
+    // Cargar los sonidos
+    const sonidoPermitido = new Audio("../static/permitido.mp3");
+    const sonidoDenegado = new Audio("../static/denegado.mp3");
 
     function onScanSuccess(decodedText) {
       console.log("Código QR detectado:", decodedText);
@@ -210,11 +208,12 @@
         } else {
           resultContainer.innerHTML = `<p>${message}</p>`;
         }
-        // Si se permite o se deniega el acceso, se aplica el overlay de color inmediatamente
         if (message.includes("permitido")) {
           aplicarOverlay('rgba(0, 128, 0, 0.3)');
+          sonidoPermitido.play();
         } else if (message.includes("denegado")) {
           aplicarOverlay('rgba(255, 0, 0, 0.3)');
+          sonidoDenegado.play();
         } else {
           document.body.style.backgroundColor = '';
         }
@@ -228,8 +227,28 @@
         document.getElementById("result").innerText = "No se encontraron cámaras.";
         return;
       }
-      const cameraId = dispositivos[dispositivoActual].id;
+
+      let cameraId = null;
+      // Buscamos la cámara trasera comparando el label de cada dispositivo
+      for (let cam of dispositivos) {
+        const label = cam.label.toLowerCase();
+        if (label.includes("back") || label.includes("rear") || label.includes("trasera") || label.includes("environment")) {
+          cameraId = cam.id;
+          break;
+        }
+      }
+      // Si no encontramos una cámara trasera, usamos la primera disponible
+      if (!cameraId) {
+        cameraId = dispositivos[0].id;
+      }
+
+      // Actualizamos el índice del dispositivo actual (útil para la función de cambiar cámara)
+      dispositivoActual = dispositivos.findIndex(cam => cam.id === cameraId);
+
       qrScanner = new Html5Qrcode("qr-reader");
+      // Se inicia el escáner con la cámara seleccionada.
+      // También podrías agregar videoConstraints de la siguiente manera:
+      // qrScanner.start(cameraId, { fps: 10, qrbox: 300, videoConstraints: { facingMode: "environment" } }, onScanSuccess);
       qrScanner.start(cameraId, { fps: 10, qrbox: 300 }, onScanSuccess);
     }
 
@@ -239,8 +258,10 @@
         return;
       }
       await qrScanner.stop();
+      // Se rota el índice para seleccionar la siguiente cámara de la lista.
       dispositivoActual = (dispositivoActual + 1) % dispositivos.length;
-      iniciarEscaner();
+      const nuevoCameraId = dispositivos[dispositivoActual].id;
+      qrScanner.start(nuevoCameraId, { fps: 10, qrbox: 300 }, onScanSuccess);
     }
 
     document.getElementById("cambiarCamara").addEventListener("click", cambiarCamara);
