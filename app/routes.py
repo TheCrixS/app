@@ -4,13 +4,12 @@ import pandas as pd
 import qrcode
 import os
 from datetime import datetime
-import cv2
 import numpy as np
-from pyzbar.pyzbar import decode
 from werkzeug.utils import secure_filename
 
+
 DATABASE_FILE = "BASE SOAT.xlsx"
-USUARIOS = "usuarios.xlsx"
+USUARIOS = "ul.xlsx"
 SHEET_NAME_USERS = "USERS"
 QR_FOLDER = os.path.join(os.getcwd(), 'static', 'qr_codes')
 SHEET_NAME = "BASE"
@@ -288,7 +287,7 @@ def init_routes(app):
                 except Exception:
                     return ""
                 return ""
-            
+
             vencimiento = convert_date(vencimiento_val)
             soat = convert_date(soat_val)
             tecnomecanica = convert_date(tecnomecanica_val)
@@ -329,8 +328,9 @@ def init_routes(app):
         # Eliminar el archivo temporal
         os.remove(temp_path)
         
-        flash('Cargue completado exitosamente.', 'Success')
+        flash('Cargue completado exitosamente', 'Success')
         return redirect(url_for('index'))
+
     
     @app.route('/usuarios')
     @login_required
@@ -417,6 +417,7 @@ def init_routes(app):
     @app.route('/logout')
     @login_required
     def logout():
+        session.clear()
         session.pop('username', None)
         return redirect(url_for('login'))
     
@@ -426,20 +427,22 @@ def init_routes(app):
     def editar_usuario():
         # Obtener el ID del usuario desde el formulario (campo oculto)
         user_id = request.form.get('id')
-        print(user_id)
         if not user_id:
             flash("ID del usuario no proporcionado.", "error")
+            return redirect(url_for('index'))
         
         # Intentar leer el archivo Excel
         try:
             df = pd.read_excel(DATABASE_FILE, sheet_name=SHEET_NAME)
+            # Aseguramos que la columna "ID" se convierta a entero
+            df['ID'] = df['ID'].astype(int)
         except Exception as e:
             flash("Error al leer el archivo Excel: " + str(e), "error")
             return redirect(url_for('index'))
         
-        # Convertir el ID a entero (asumiendo que es numérico)
+        # Convertir el ID a entero (si viene como "1.0", se hace primero float y luego int)
         try:
-            user_id_int = int(user_id)
+            user_id_int = int(float(user_id))
         except ValueError:
             flash("ID inválido.", "error")
             return redirect(url_for('index'))
@@ -452,35 +455,20 @@ def init_routes(app):
         
         # Obtener el índice de la fila a modificar
         idx = matching_rows.index[0]
-
-        # Convertir los campos que deben ser numéricos a int
-        try:
-            cedula_value = int(request.form.get('cedula'))
-        except (ValueError, TypeError):
-            flash("El valor de Cédula debe ser numérico.", "error")
-            return redirect(url_for('index'))
         
-        try:
-            tarjeta_value = int(request.form.get('tarjeta'))
-        except (ValueError, TypeError):
-            flash("El valor de Tarjeta de Propiedad debe ser numérico.", "error")
-            return redirect(url_for('index'))
-        # Actualizar los campos editables (excluyendo 'ID' y 'ESTADO')
-        df.at[idx, 'CEDULA'] = cedula_value
+        # Actualizar los campos editables SIN convertir CEDULA y TARJETA a entero
+        df.at[idx, 'CEDULA'] = request.form.get('cedula')
         df.at[idx, 'NOMBRES Y APELLIDOS'] = request.form.get('nombres')
         df.at[idx, 'EMPRESA'] = request.form.get('empresa')
         df.at[idx, 'TIPO DE TRANSPORTE'] = request.form.get('transporte')
         df.at[idx, 'PLACA'] = request.form.get('placa')
-        df.at[idx, 'TARJETA DE PROPIEDAD'] = tarjeta_value
+        df.at[idx, 'TARJETA DE PROPIEDAD'] = request.form.get('tarjeta')
         df.at[idx, 'CATEGORIA(S)'] = request.form.get('categoria')
         df.at[idx, 'FECHA DE VENCIMIENTO'] = request.form.get('vencimiento')
         df.at[idx, 'SOAT'] = request.form.get('soat')
         df.at[idx, 'TECNOMECANICA'] = request.form.get('tecnomecanica')
-        df['OBSERVACIONES'] = df['OBSERVACIONES'].astype(str)
         df.at[idx, 'OBSERVACIONES'] = request.form.get('observaciones')
         df.at[idx, 'ESTADO'] = calcular_estado(request.form.get('soat'), request.form.get('tecnomecanica'))
-
-        app.logger.debug(f"Actualizando usuario con ID {user_id_int} en la fila {idx}.")
         
         # Guardar los cambios de vuelta en el archivo Excel
         try:
@@ -488,6 +476,6 @@ def init_routes(app):
             flash("Usuario actualizado correctamente.", "success")
         except Exception as e:
             flash("Error al guardar los cambios en el Excel: " + str(e), "error")
-            return render_template('usuarios.html')
+            return redirect(url_for('mostrar_usuarios'))
         
         return redirect(url_for('mostrar_usuarios'))

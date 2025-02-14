@@ -165,7 +165,7 @@
       background-color: #FFA500;
       color: white;
     }
-    .modal {
+    .modalEDIT {
       display: none;
       position: fixed;
       z-index: 1000;
@@ -179,7 +179,7 @@
       padding: 10px; /* Espacio para que el modal no toque los bordes */
     }
 
-    .modal-content {
+    .modal-contentEDIT {
         background-color: #fff;
         padding: 20px;
         border-radius: 10px;
@@ -192,7 +192,7 @@
         box-sizing: border-box; /* Para incluir el padding en el ancho total */
     }
 
-    .close-button {
+    .close-buttonEDIT{
         position: absolute;
         top: 10px;
         right: 20px;
@@ -200,6 +200,78 @@
         font-weight: bold;
         cursor: pointer;
     }
+
+    /* Estilos para el Modal de confirmación */
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 1000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.5);
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal-content {
+      background-color: #fff;
+      padding: 20px;
+      border: 1px solid #888;
+      border-radius: 10px;
+      text-align: center;
+      position: relative;
+      width: 80%;
+      max-width: 500px;
+      display: flex;
+      flex-direction: column;
+      align-items: center; /* Centra el contenido del modal */
+      justify-content: center;
+    }
+
+    .close-button {
+      position: absolute;
+      top: 10px;
+      right: 20px;
+      font-size: 24px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .modal-content img {
+        width: 300px; /* Ajusta el tamaño del QR */
+        height: auto;
+        margin: 1rem auto; /* Centra la imagen horizontalmente */
+        display: block;
+        border: 2px solid #ccc;
+        border-radius: 10px;
+    }
+
+    .modal-buttons {
+        display: flex;
+        justify-content: center; /* Centra los botones */
+        gap: 10px; /* Espaciado entre botones */
+        width: 100%;
+    }
+
+    .modal-buttons a {
+        padding: 0.8rem 1.5rem;
+        color: white;
+        background-color: var(--accent-color);
+        text-decoration: none;
+        text-align: center;
+        border-radius: 5px;
+        font-size: 1rem;
+        transition: background-color 0.3s ease;
+        flex-grow: 1; /* Hace que los botones se alineen uniformemente */
+        max-width: 120px; /* Limita el tamaño de los botones */
+    }
+
+    .modal-buttons a:hover {
+      background-color: #5643d6;
+    }
+
     .filter-container {
       margin-bottom: 20px;
       display: flex;
@@ -418,51 +490,51 @@
             <input type="text" id="search" onkeyup="filtrarTabla()" placeholder="🔍 Buscar...">
         </div>
         <div class="table-container">
-            <table id="tablaUsuarios">
-                <thead>
-                  <tr>
-                    {% if usuarios %}
-                      {% for col in usuarios[0].keys() %}
-                        <th>{{ col }}</th>
-                      {% endfor %}
-                      <th>Acciones</th data-id=>
-                    {% else %}
-                      <th>No hay usuarios registrados</th>
-                    {% endif %}
-                  </tr>
-                </thead>
-                <tbody>
-                  {% if usuarios %}
-                    {% for usuario in usuarios %}
-                    <tr>
-                      {% for value in usuario.values() %}
-                        <td>{{ value }}</td>
-                      {% endfor %}
-                      <td>
-                        <button class="btn btn-edit-user"
-                          data-id="{{ usuario['ID'] }}"
-                          data-cedula="{{ usuario['CEDULA'] }}"
-                          data-nombres="{{ usuario['NOMBRES Y APELLIDOS'] }}"
-                          data-empresa="{{ usuario['EMPRESA'] }}"
-                          data-transporte="{{ usuario['TIPO DE TRANSPORTE'] }}"
-                          data-placa="{{ usuario['PLACA'] }}"
-                          data-tarjeta="{{ usuario['TARJETA DE PROPIEDAD'] }}"
-                          data-categoria="{{ usuario['CATEGORIA(S)'] }}"
-                          data-vencimiento="{{ usuario['FECHA DE VENCIMIENTO'] }}"
-                          data-soat="{{ usuario['SOAT'] }}"
-                          data-tecnomecanica="{{ usuario['TECNOMECANICA'] }}"
-                          data-observaciones="{{ usuario['OBSERVACIONES'] }}"
-                        >Editar</button>                      
-                        <button class="btn btn-qr" onclick="mostrarQR('{{usuario.CEDULA}}')">Ver QR</button>
-                        <form action="{{ url_for('eliminar_usuario', id=usuario['ID']) }}" method="post" style="display:inline;" onsubmit="confirmarEliminacion(event)">
-                          <button type="submit" class="btn btn-delete">Eliminar</button>
-                        </form>
-                      </td>
-                    </tr>
-                    {% endfor %}
-                  {% endif %}
-                </tbody>
-              </table>
+          <table id="tablaUsuarios">
+            <thead>
+              <tr>
+                {% if usuarios %}
+                  {% for col in usuarios[0].keys() %}
+                    <th>{{ col }}</th>
+                  {% endfor %}
+                  <th>Acciones</th>
+                {% else %}
+                  <th>No hay usuarios registrados</th>
+                {% endif %}
+              </tr>
+            </thead>
+            <tbody>
+              {% if usuarios %}
+                {% for usuario in usuarios %}
+                <tr data-id="{{ usuario['ID'] }}">
+                  {% for value in usuario.values() %}
+                    <td>{{ value }}</td>
+                  {% endfor %}
+                  <td>
+                    <button class="btn btn-edit-user"
+                      data-id="{{ usuario['ID'] }}"
+                      data-cedula="{{ usuario['CEDULA'] }}"
+                      data-nombres="{{ usuario['NOMBRES Y APELLIDOS'] }}"
+                      data-empresa="{{ usuario['EMPRESA'] }}"
+                      data-transporte="{{ usuario['TIPO DE TRANSPORTE'] }}"
+                      data-placa="{{ usuario['PLACA'] }}"
+                      data-tarjeta="{{ usuario['TARJETA DE PROPIEDAD'] }}"
+                      data-categoria="{{ usuario['CATEGORIA(S)'] }}"
+                      data-vencimiento="{{ usuario['FECHA DE VENCIMIENTO'] }}"
+                      data-soat="{{ usuario['SOAT'] }}"
+                      data-tecnomecanica="{{ usuario['TECNOMECANICA'] }}"
+                      data-observaciones="{{ usuario['OBSERVACIONES'] }}"
+                    >Editar</button>
+                    <button class="btn btn-qr" onclick="mostrarQR('{{ usuario.CEDULA }}')">Ver QR</button>
+                    <form action="{{ url_for('eliminar_usuario', id=usuario['ID']) }}" method="post" style="display:inline;" onsubmit="confirmarEliminacion(event)">
+                      <button type="submit" class="btn btn-delete">Eliminar</button>
+                    </form>
+                  </td>
+                </tr>
+                {% endfor %}
+              {% endif %}
+            </tbody>
+          </table>
         </div>
     </div>
     </div>
@@ -480,9 +552,9 @@
     </div>
 
         <!-- Modal para Editar Usuario -->
-        <div id="modalEditar" class="modal">
-          <div class="modal-content">
-            <span class="close-button" onclick="cerrarModalEditar()">×</span>
+        <div id="modalEditar" class="modalEDIT">
+          <div class="modal-contentEDIT">
+            <span class="close-buttonEDIT" onclick="cerrarModalEditar()">×</span>
             <h2>Editar Usuario</h2>
             <!-- El formulario envía al endpoint de edición (actualiza según tu ruta) -->
             <form id="formEditarUsuario" action="{{ url_for('editar_usuario') }}" method="POST">
