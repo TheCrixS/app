@@ -6,6 +6,7 @@ import os
 from datetime import datetime
 import numpy as np
 from werkzeug.utils import secure_filename
+import bcrypt
 
 
 DATABASE_FILE = "BASE SOAT.xlsx"
@@ -367,44 +368,28 @@ def init_routes(app):
         except Exception as e:
             return f"Error al eliminar el usuario y su código QR: {str(e)}"
         
-    def load_users():
+    def load_users(ul):
+        """Carga los usuarios y contraseñas encriptadas desde el archivo Excel."""
         try:
-            # Lee el archivo Excel especificando la hoja 'USERS'
-            df = pd.read_excel(USUARIOS, sheet_name=SHEET_NAME_USERS)
-                    
-            # Verifica que existan las columnas 'username', 'password' y 'role'
-            required_cols = ['username', 'password', 'role']
-            for col in required_cols:
-                if col not in df.columns:
-                    print(f"Error: La columna '{col}' no se encontró en el archivo Excel.")
-                    return {}
-                    
-            users = {
-                str(username).strip(): {
-                    "password": str(password).strip(),
-                    "role": str(role).strip()
-                }
-                for username, password, role in zip(df['username'], df['password'], df['role'])
-            }
+            df = pd.read_excel(ul)
+            users = {row["username"]: {"password": row["password"], "role": row["role"]} for _, row in df.iterrows()}
             return users
-        except Exception as e:
-            print("Error al leer el archivo Excel:", e)
+        except FileNotFoundError:
             return {}
 
     # Cargar los usuarios al iniciar la aplicación
-    users = load_users()
+    users = load_users(USUARIOS)
 
     @app.route('/', methods=['GET', 'POST'])
     def login():
         if request.method == 'POST':
-            # Al comparar las credenciales, eliminamos espacios en blanco:
             username_input = request.form.get('username').strip()
-            password_input = request.form.get('password').strip()
-
-            # Asegúrate de que en el diccionario de usuarios también se eliminen los espacios:
+            password_input = request.form.get('password').strip().encode()  # Convertir la contraseña ingresada a bytes
+            
             if username_input in users:
-                stored_password = str(users[username_input]['password']).strip()
-                if stored_password == password_input:
+                stored_password = users[username_input]['password'].encode()  # Convertir la contraseña encriptada a bytes
+                
+                if bcrypt.checkpw(password_input, stored_password):  # Comparar contraseñas
                     session['username'] = username_input
                     session['role'] = users[username_input]['role']
                     return redirect(url_for('index'))
@@ -412,6 +397,7 @@ def init_routes(app):
                     flash("Usuario o contraseña incorrectos.")
             else:
                 flash("Usuario o contraseña incorrectos.")
+        
         return render_template('login.html')
 
     @app.route('/logout')
