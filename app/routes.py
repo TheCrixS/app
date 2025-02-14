@@ -85,7 +85,6 @@ def init_routes(app):
             observaciones = request.form['observaciones']
 
             # Convertir fechas a formato AAAA/MM/DD
-            vencimiento = datetime.strptime(vencimiento, "%Y-%m-%d").strftime("%Y/%m/%d")
             soat = datetime.strptime(soat, "%Y-%m-%d").strftime("%Y/%m/%d")
             tecnomecanica = datetime.strptime(tecnomecanica, "%Y-%m-%d").strftime("%Y/%m/%d")
 
@@ -271,7 +270,7 @@ def init_routes(app):
             placa = row.get('PLACA', '')
             tarjeta = row.get('TARJETA DE PROPIEDAD', '')
             categoria = row.get('CATEGORIA(S)', '')
-            vencimiento_val = row.get('FECHA DE VENCIMIENTO', '')
+            vencimiento = row.get('FECHA DE VENCIMIENTO', '')
             soat_val = row.get('SOAT', '')
             tecnomecanica_val = row.get('TECNOMECANICA', '')
             observaciones = row.get('OBSERVACIONES', '')
@@ -288,8 +287,6 @@ def init_routes(app):
                 except Exception:
                     return ""
                 return ""
-
-            vencimiento = convert_date(vencimiento_val)
             soat = convert_date(soat_val)
             tecnomecanica = convert_date(tecnomecanica_val)
             
