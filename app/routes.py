@@ -155,10 +155,11 @@ def init_routes(app):
             # Cargar la base de datos
             df = load_database()
 
-            # Verificar si la cédula ya existe
-            if cedula in df["CEDULA"].astype(str).values:
-                flash("Error: La cédula ya está registrada.", "danger")
-                return jsonify({"error": "La cédula ya está registrada."})
+            # Validar que no exista ya un registro para esa cédula y ese tipo de transporte
+            if not df[(df["CEDULA"].astype(str) == cedula) & (df["TIPO DE TRANSPORTE"] == transporte)].empty:
+                flash("Error: Ya se ha registrado un vehículo de este tipo para esta cédula.", "danger")
+                return jsonify({"error": "Ya se ha registrado un vehículo de este tipo para esta cédula."})
+
 
             # Generar un nuevo ID y calcular el estado
             nuevo_id = obtener_nuevo_id(df)
@@ -269,12 +270,13 @@ def init_routes(app):
 
         for index, row in df_upload.iterrows():
             cedula = convert_to_int_str(row.get('CEDULA'))
-            if cedula in df["CEDULA"].astype(str).values:
+            transporte = row.get('TIPO DE TRANSPORTE', '')
+            # Validar que no exista ya un registro para la misma combinación (CEDULA y TIPO DE TRANSPORTE)
+            if not df[(df["CEDULA"].astype(str) == cedula) & (df["TIPO DE TRANSPORTE"] == transporte)].empty:
                 continue
 
             nombre = row.get('NOMBRES Y APELLIDOS', '')
             empresa = row.get('EMPRESA', '')
-            transporte = row.get('TIPO DE TRANSPORTE', '')
             placa = row.get('PLACA', '')
             tarjeta = convert_to_int_str(row.get('TARJETA DE PROPIEDAD'))
             categoria = row.get('CATEGORIA(S)', '')
@@ -430,11 +432,21 @@ def init_routes(app):
         except ValueError:
             cedula_int = cedula_input
 
+        transporte_input = request.form.get('transporte', '')
+    
+        # Validar que no exista otro registro con la misma combinación de CEDULA y TIPO DE TRANSPORTE
+        duplicate = df[(df["CEDULA"].astype(str) == cedula_int) & 
+                    (df["TIPO DE TRANSPORTE"] == transporte_input) & 
+                    (df["ID"] != user_id_int)]
+        if not duplicate.empty:
+            flash("Error: Ya se ha registrado un vehículo de este tipo para esta cédula.", "danger")
+            return redirect(url_for('mostrar_usuarios'))
+
         # Actualizamos los campos; aplicamos conversión de fechas para soat y tecnomecánica
         df.at[idx, 'CEDULA'] = cedula_int
         df.at[idx, 'NOMBRES Y APELLIDOS'] = request.form.get('nombres')
         df.at[idx, 'EMPRESA'] = request.form.get('empresa')
-        df.at[idx, 'TIPO DE TRANSPORTE'] = request.form.get('transporte')
+        df.at[idx, 'TIPO DE TRANSPORTE'] = transporte_input
         df.at[idx, 'PLACA'] = request.form.get('placa')
         df.at[idx, 'TARJETA DE PROPIEDAD'] = request.form.get('tarjeta')
         df.at[idx, 'CATEGORIA(S)'] = request.form.get('categoria')
