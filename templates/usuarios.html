@@ -1,14 +1,13 @@
 <!DOCTYPE html>
 <html lang="es">
-
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Usuarios Registrados</title>
   <link rel="icon" href="{{ url_for('static', filename='logo-ts3.png') }}" type="image/x-icon">
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-  <style>
-    :root {
+  <style> 
+:root {
       --primary-color: #071C23;
       --secondary-color: #FF914D;
       --background-color: #F9F9F9;
@@ -351,133 +350,185 @@
       cursor: pointer;
       width: 100%;
     }
+    th.select-col, td.select-col {
+      width: 40px;
+      text-align: center;
+    }
+    /* Botón para eliminación masiva, ubicado en la parte superior */
+    .bulk-delete-btn {
+      background-color: var(--accent-color);
+      color: white;
+      padding: 0.8rem 1.5rem;
+      border: none;
+      border-radius: 5px;
+      font-size: 1rem;
+      transition: background-color 0.3s ease;
+      margin-bottom: 10px;
+      cursor: pointer;
+    }
+    
+    .bulk-delete-btn:hover {
+      background-color: #5643d6;
+    }
   </style>
-    <script>
-        function confirmarEliminacion(event) {
-          if (!confirm("¿Estás seguro de que deseas eliminar este usuario?")) {
-            event.preventDefault();
+  <script>
+    function confirmarEliminacion(event) {
+      if (!confirm("¿Estás seguro de que deseas eliminar este usuario?")) {
+        event.preventDefault();
+      }
+    }
+    function filtrarTabla() {
+      var input, filtro, tabla, tr, td, i, j, txtValor;
+      input = document.getElementById("search");
+      filtro = input.value.toUpperCase();
+      tabla = document.getElementById("tablaUsuarios");
+      tr = tabla.getElementsByTagName("tr");
+      for (i = 1; i < tr.length; i++) {
+        tr[i].style.display = "none";
+        td = tr[i].getElementsByTagName("td");
+        for (j = 0; j < td.length; j++) {
+          if (td[j]) {
+            txtValor = td[j].textContent || td[j].innerText;
+            if (txtValor.toUpperCase().indexOf(filtro) > -1) {
+              tr[i].style.display = "";
+              break;
+            }
           }
         }
-        function filtrarTabla() {
-            var input, filtro, tabla, tr, td, i, j, txtValor;
-            input = document.getElementById("search");
-            filtro = input.value.toUpperCase();
-            tabla = document.getElementById("tablaUsuarios");
-            tr = tabla.getElementsByTagName("tr");
-
-            for (i = 1; i < tr.length; i++) {
-                tr[i].style.display = "none";
-                td = tr[i].getElementsByTagName("td");
-                for (j = 0; j < td.length; j++) {
-                if (td[j]) {
-                    txtValor = td[j].textContent || td[j].innerText;
-                    if (txtValor.toUpperCase().indexOf(filtro) > -1) {
-                    tr[i].style.display = "";
-                    break;
-                    }
-                }
-                }
-            }
-        }
-        // Función para mostrar el modal de edición y completar los campos del formulario
-        $(document).on('click', '.btn-edit-user', function() {
-          // Extraer datos del botón (atributos data-*)
-          var id = $(this).data('id');
-          var cedula = $(this).data('cedula');
-          var nombres = $(this).data('nombres');
-          var empresa = $(this).data('empresa');
-          var transporte = $(this).data('transporte');
-          var placa = $(this).data('placa');
-          var tarjeta = $(this).data('tarjeta');
-          var categoria = $(this).data('categoria');
-          var vencimiento = $(this).data('vencimiento');
-          var soat = $(this).data('soat');
-          var tecnomecanica = $(this).data('tecnomecanica');
-          var observaciones = $(this).data('observaciones');
-          
-          // Completar los campos del formulario
-          $('#edit-id').val(id);
-          $('#edit-cedula').val(cedula);
-          $('#edit-nombres').val(nombres);
-          $('#edit-empresa').val(empresa);
-          $('#edit-transporte').val(transporte);
-          $('#edit-placa').val(placa);
-          $('#edit-tarjeta').val(tarjeta);
-          $('#edit-categoria').val(categoria);
-          $('#edit-vencimiento').val(vencimiento);
-          $('#edit-soat').val(soat);
-          $('#edit-tecnomecanica').val(tecnomecanica);
-          $('#edit-observaciones').val(observaciones);
-          
-          // Mostrar el modal de edición
-          $('#modalEditar').css('display', 'flex');
+      }
+    }
+    
+    // Función para mostrar el modal de edición y completar los campos
+    $(document).on('click', '.btn-edit-user', function() {
+      var id = $(this).data('id');
+      var cedula = $(this).data('cedula');
+      var nombres = $(this).data('nombres');
+      var empresa = $(this).data('empresa');
+      var transporte = $(this).data('transporte');
+      var placa = $(this).data('placa');
+      var tarjeta = $(this).data('tarjeta');
+      var categoria = $(this).data('categoria');
+      var vencimiento = $(this).data('vencimiento');
+      var soat = $(this).data('soat');
+      var tecnomecanica = $(this).data('tecnomecanica');
+      var observaciones = $(this).data('observaciones');
+      
+      $('#edit-id').val(id);
+      $('#edit-cedula').val(cedula);
+      $('#edit-nombres').val(nombres);
+      $('#edit-empresa').val(empresa);
+      $('#edit-transporte').val(transporte);
+      $('#edit-placa').val(placa);
+      $('#edit-tarjeta').val(tarjeta);
+      $('#edit-categoria').val(categoria);
+      $('#edit-vencimiento').val(vencimiento);
+      $('#edit-soat').val(soat);
+      $('#edit-tecnomecanica').val(tecnomecanica);
+      $('#edit-observaciones').val(observaciones);
+      
+      $('#modalEditar').css('display', 'flex');
+    });
+    
+    function cerrarModalEditar() {
+      $('#modalEditar').css('display', 'none');
+    }
+    
+    function mostrarQR(cedula) {
+      document.getElementById("qrImage").src = "/static/qr_codes/" + cedula + ".png";
+      document.getElementById("modalQR").style.display = "flex";
+    }
+    
+    function closeModal() {
+      document.getElementById("modalQR").style.display = "none";
+    }
+    
+    function imprimirQR() {
+      var qrSrc = document.getElementById("qrImage").src;
+      var ventana = window.open("", "_blank");
+      ventana.document.write(`
+        <html>
+          <head>
+            <title>Imprimir QR</title>
+            <style>
+              body {
+                margin: 0;
+                padding: 0;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                height: 100vh;
+                background-color: #fff;
+              }
+              img {
+                max-width: 80%;
+                height: auto;
+                display: block;
+              }
+            </style>
+          </head>
+          <body>
+            <img id="imgQR" src="${qrSrc}" alt="Código QR">
+          </body>
+        </html>
+      `);
+      ventana.document.close();
+      var img = ventana.document.getElementById("imgQR");
+      img.onload = function() {
+        ventana.print();
+        ventana.close();
+      };
+      setTimeout(function(){
+        if (!img.complete) return;
+        ventana.print();
+        ventana.close();
+      }, 500);
+    }
+    
+    // Función para seleccionar/deseleccionar todos los checkboxes
+    document.addEventListener('DOMContentLoaded', function() {
+      document.getElementById('select-all').addEventListener('change', function() {
+        var checkboxes = document.querySelectorAll('.user-checkbox');
+        checkboxes.forEach(function(checkbox) {
+          checkbox.checked = document.getElementById('select-all').checked;
         });
-        
-        // Función para cerrar el modal de edición
-        function cerrarModalEditar() {
-          $('#modalEditar').css('display', 'none');
+      });
+    });
+    
+    // Función para el botón de eliminación masiva
+    document.addEventListener('DOMContentLoaded', function() {
+      document.getElementById('btnMassDelete').addEventListener('click', function() {
+        if (!confirm("¿Estás seguro de que deseas eliminar los usuarios seleccionados?")) {
+          return;
         }
-        
-        function mostrarQR(cedula) {
-          document.getElementById("qrImage").src = "../static/qr_codes/" + cedula + ".png";
-          document.getElementById("modalQR").style.display = "flex";
+        // Recolectar IDs seleccionados
+        var selected = [];
+        document.querySelectorAll('.user-checkbox:checked').forEach(function(checkbox) {
+          selected.push(checkbox.value);
+        });
+        if (selected.length === 0) {
+          alert("No se seleccionaron usuarios");
+          return;
         }
-
-        function closeModal() {
-          document.getElementById("modalQR").style.display = "none";
-        }
-        function imprimirQR() {
-          var qrSrc = document.getElementById("qrImage").src;
-          var ventana = window.open("", "_blank");
-
-          ventana.document.write(`
-              <html>
-                  <head>
-                      <title>Imprimir QR</title>
-                      <style>
-                          body {
-                              margin: 0;
-                              padding: 0;
-                              display: flex;
-                              justify-content: center;
-                              align-items: center;
-                              height: 100vh;
-                              background-color: #fff;
-                          }
-                          img {
-                              max-width: 80%;
-                              height: auto;
-                              display: block;
-                          }
-                      </style>
-                  </head>
-                  <body>
-                      <img id="imgQR" src="${qrSrc}" alt="Código QR">
-                  </body>
-              </html>
-          `);
-          ventana.document.close();
-
-          var img = ventana.document.getElementById("imgQR");
-          img.onload = function() {
-              ventana.print();
-              ventana.close();
-          };
-
-          setTimeout(function(){
-              if (!img.complete) return;
-              ventana.print();
-              ventana.close();
-          }, 500);
-        }
-      </script>
+        // Crear inputs ocultos en el formulario de eliminación masiva
+        var form = document.getElementById('massDeletionForm');
+        form.innerHTML = '';
+        selected.forEach(function(id) {
+          var input = document.createElement('input');
+          input.type = 'hidden';
+          input.name = 'selected_ids';
+          input.value = id;
+          form.appendChild(input);
+        });
+        form.submit();
+      });
+    });
+  </script>
 </head>
-
 <body>
   <header>
-      <a href="{{ url_for('index') }}">
-        <img src="../static/logo-ts3.png" alt="TS3+ Logo" class="header-logo">
-      </a>
+    <a href="{{ url_for('index') }}">
+      <img src="../static/logo-ts3.png" alt="TS3+ Logo" class="header-logo">
+    </a>
     <div class="button-container">
       <a class="back-button" href="{{ url_for('index') }}">Volver al Menú Principal</a>
       <a class="back-button" href="{{ url_for('logout') }}">Cerrar sesión</a>
@@ -485,33 +536,49 @@
   </header>
   <main>
     <div class="container">
-        <div class="filter-container">
-            <label for="search">Buscar:</label>
-            <input type="text" id="search" onkeyup="filtrarTabla()" placeholder="🔍 Buscar...">
-        </div>
-        <div class="table-container">
-          <table id="tablaUsuarios">
-            <thead>
-              <tr>
-                {% if usuarios %}
-                  {% for col in usuarios[0].keys() %}
-                    <th>{{ col }}</th>
-                  {% endfor %}
-                  <th>Acciones</th>
-                {% else %}
-                  <th>No hay usuarios registrados</th>
-                {% endif %}
-              </tr>
-            </thead>
-            <tbody>
+      <div class="filter-container">
+        <label for="search">Buscar:</label>
+        <input type="text" id="search" onkeyup="filtrarTabla()" placeholder="🔍 Buscar...">
+      </div>
+      <!-- Botón para eliminación masiva (fuera de cualquier formulario anidado) -->
+      <button id="btnMassDelete" class="bulk-delete-btn">Eliminar Seleccionados</button>
+      
+      <!-- Tabla de usuarios (sin formulario global) -->
+      <div class="table-container">
+        <table id="tablaUsuarios">
+          <thead>
+            <tr>
+              <th class="select-col"><input type="checkbox" id="select-all"></th>
               {% if usuarios %}
-                {% for usuario in usuarios %}
+                {% for col in columnas %}
+                  <th>{{ col }}</th>
+                {% endfor %}
+                <th>Acciones</th>
+              {% else %}
+                <th>No hay usuarios registrados</th>
+              {% endif %}
+            </tr>
+          </thead>
+          <tbody>
+            {% if usuarios %}
+              {% for usuario in usuarios %}
                 <tr data-id="{{ usuario['ID'] }}">
-                  {% for value in usuario.values() %}
-                    <td>{{ value }}</td>
+                  <!-- Checkbox para cada usuario -->
+                  <td class="select-col">
+                    <input type="checkbox" name="selected_ids" class="user-checkbox" value="{{ usuario['ID'] }}">
+                  </td>
+                  {% for col in columnas %}
+                    <td>
+                      {% if usuario[col] is not none and usuario[col] != '' %}
+                        {{ usuario[col] }}
+                      {% else %}
+                        {{ '' }}
+                      {% endif %}
+                    </td>
                   {% endfor %}
                   <td>
-                    <button class="btn btn-edit-user"
+                    <!-- Botón para editar -->
+                    <button type="button" class="btn btn-edit-user"
                       data-id="{{ usuario['ID'] }}"
                       data-cedula="{{ usuario['CEDULA'] }}"
                       data-nombres="{{ usuario['NOMBRES Y APELLIDOS'] }}"
@@ -525,79 +592,67 @@
                       data-tecnomecanica="{{ usuario['TECNOMECANICA'] }}"
                       data-observaciones="{{ usuario['OBSERVACIONES'] }}"
                     >Editar</button>
-                    <button class="btn btn-qr" onclick="mostrarQR('{{ usuario.CEDULA }}')">Ver QR</button>
+                    <button type="button" class="btn btn-qr" onclick="mostrarQR('{{ usuario.CEDULA }}')">Ver QR</button>
+                    <!-- Formulario individual para eliminar -->
                     <form action="{{ url_for('eliminar_usuario', id=usuario['ID']) }}" method="post" style="display:inline;" onsubmit="confirmarEliminacion(event)">
                       <button type="submit" class="btn btn-delete">Eliminar</button>
                     </form>
                   </td>
                 </tr>
-                {% endfor %}
-              {% endif %}
-            </tbody>
-          </table>
-        </div>
+              {% endfor %}
+            {% endif %}
+          </tbody>
+        </table>
+      </div>
+      <!-- Formulario oculto para la eliminación masiva -->
+      <form id="massDeletionForm" action="{{ url_for('eliminar_varios') }}" method="post" style="display:none;"></form>
     </div>
-    </div>
+    
     <!-- Modal para Ver QR -->
     <div id="modalQR" class="modal">
-        <div class="modal-content">
-            <span class="close-button" onclick="closeModal()">×</span>
-            <h2>Código QR</h2>
-            <img id="qrImage" src="" alt="Código QR">
-            <div class="modal-buttons">
-                <!-- El href se actualiza dinámicamente con JavaScript -->
-                <a href="#" onclick="imprimirQR(); return false;">Imprimir</a>
-            </div>
+      <div class="modal-content">
+        <span class="close-button" onclick="closeModal()">×</span>
+        <h2>Código QR</h2>
+        <img id="qrImage" src="" alt="Código QR">
+        <div class="modal-buttons">
+          <a href="#" onclick="imprimirQR(); return false;">Imprimir</a>
         </div>
+      </div>
     </div>
-
-        <!-- Modal para Editar Usuario -->
-        <div id="modalEditar" class="modalEDIT">
-          <div class="modal-contentEDIT">
-            <span class="close-buttonEDIT" onclick="cerrarModalEditar()">×</span>
-            <h2>Editar Usuario</h2>
-            <!-- El formulario envía al endpoint de edición (actualiza según tu ruta) -->
-            <form id="formEditarUsuario" action="{{ url_for('editar_usuario') }}" method="POST">
-              <!-- Input oculto para el ID (no se muestra ni se edita) -->
-              <input type="hidden" name="id" id="edit-id">
-              
-              <label for="edit-cedula">Cédula:</label>
-              <input type="text" name="cedula" id="edit-cedula" required>
-              
-              <label for="edit-nombres">Nombres y Apellidos:</label>
-              <input type="text" name="nombres" id="edit-nombres" required>
-              
-              <label for="edit-empresa">Empresa:</label>
-              <input type="text" name="empresa" id="edit-empresa">
-              
-              <label for="edit-transporte">Tipo de Transporte:</label>
-              <input type="text" name="transporte" id="edit-transporte">
-              
-              <label for="edit-placa">Placa:</label>
-              <input type="text" name="placa" id="edit-placa">
-              
-              <label for="edit-tarjeta">Tarjeta de Propiedad:</label>
-              <input type="text" name="tarjeta" id="edit-tarjeta">
-              
-              <label for="edit-categoria">Categoría(s):</label>
-              <input type="text" name="categoria" id="edit-categoria">
-              
-              <label for="edit-vencimiento">Fecha de Vencimiento:</label>
-              <input type="text" name="vencimiento" id="edit-vencimiento">
-              
-              <label for="edit-soat">SOAT:</label>
-              <input type="text" name="soat" id="edit-soat">
-              
-              <label for="edit-tecnomecanica">Tecnomecánica:</label>
-              <input type="text" name="tecnomecanica" id="edit-tecnomecanica">
-              
-              <label for="edit-observaciones">Observaciones:</label>
-              <textarea name="observaciones" id="edit-observaciones"></textarea>
-              
-              <button type="submit" class="btn btn-edit">Guardar cambios</button>
-            </form>
-          </div>
-        </div>
+    
+    <!-- Modal para Editar Usuario -->
+    <div id="modalEditar" class="modalEDIT">
+      <div class="modal-contentEDIT">
+        <span class="close-buttonEDIT" onclick="cerrarModalEditar()">×</span>
+        <h2>Editar Usuario</h2>
+        <form id="formEditarUsuario" action="{{ url_for('editar_usuario') }}" method="POST">
+          <input type="hidden" name="id" id="edit-id">
+          <label for="edit-cedula">Cédula:</label>
+          <input type="text" name="cedula" id="edit-cedula" required>
+          <label for="edit-nombres">Nombres y Apellidos:</label>
+          <input type="text" name="nombres" id="edit-nombres" required>
+          <label for="edit-empresa">Empresa:</label>
+          <input type="text" name="empresa" id="edit-empresa">
+          <label for="edit-transporte">Tipo de Transporte:</label>
+          <input type="text" name="transporte" id="edit-transporte">
+          <label for="edit-placa">Placa:</label>
+          <input type="text" name="placa" id="edit-placa">
+          <label for="edit-tarjeta">Tarjeta de Propiedad:</label>
+          <input type="text" name="tarjeta" id="edit-tarjeta">
+          <label for="edit-categoria">Categoría(s):</label>
+          <input type="text" name="categoria" id="edit-categoria">
+          <label for="edit-vencimiento">Fecha de Vencimiento:</label>
+          <input type="text" name="vencimiento" id="edit-vencimiento">
+          <label for="edit-soat">SOAT:</label>
+          <input type="text" name="soat" id="edit-soat">
+          <label for="edit-tecnomecanica">Tecnomecánica:</label>
+          <input type="text" name="tecnomecanica" id="edit-tecnomecanica">
+          <label for="edit-observaciones">Observaciones:</label>
+          <textarea name="observaciones" id="edit-observaciones"></textarea>
+          <button type="submit" class="btn btn-edit">Guardar cambios</button>
+        </form>
+      </div>
+    </div>
   </main>
   <footer>
     <p>&copy; 2025 TS3+. Todos los derechos reservados.</p>
