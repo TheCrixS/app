@@ -209,6 +209,7 @@ def init_routes(app):
             qr_data = data.get("qr_data")
             if not qr_data:
                 return jsonify({"message": "No se recibió código QR."})
+            
             # Extraer el ID del QR
             id_usuario = None
             for line in qr_data.split("\n"):
@@ -217,11 +218,20 @@ def init_routes(app):
                     break
             if not id_usuario:
                 return jsonify({"message": "No se encontró el ID en el QR."})
+            
             # Buscar el usuario en la base de datos
             df = load_database()
             usuario = df[df["ID"] == id_usuario]
             if usuario.empty:
                 return jsonify({"message": "Usuario no encontrado."})
+            
+            # Extraer y "limpiar" la placa
+            placa = usuario["PLACA"].values[0]
+            placa_str = str(placa).strip().lower() if placa is not None else ""
+            # Se valida si la placa es una cadena vacía, "none" o "nan"
+            if placa_str in ["", "none", "nan"]:
+                return jsonify({"message": "❌ Acceso denegado: Datos incompletos"})
+            
             estado = usuario["ESTADO"].values[0]
             mensaje = "✅ Acceso permitido" if estado == "Activo" else "❌ Acceso denegado"
             datos = {
@@ -329,6 +339,7 @@ def init_routes(app):
                 if col in df.columns:
                     df[col] = df[col].apply(convert_to_int_str)
             usuarios = df.to_dict(orient='records')
+            total_usuarios = len(usuarios)  # Contador de usuarios
             COLUMNAS_DESEADAS = [
                 'ID', 'ESTADO', 'CEDULA', 'NOMBRES Y APELLIDOS', 'EMPRESA',
                 'TIPO DE TRANSPORTE', 'PLACA', 'TARJETA DE PROPIEDAD',
@@ -339,7 +350,7 @@ def init_routes(app):
                 {col: usuario.get(col, '') for col in COLUMNAS_DESEADAS}
                 for usuario in usuarios
             ]
-            return render_template('usuarios.html', usuarios=usuarios_filtrados, columnas=COLUMNAS_DESEADAS)
+            return render_template('usuarios.html', usuarios=usuarios_filtrados, columnas=COLUMNAS_DESEADAS, total=total_usuarios)
         except Exception as e:
             return f"Error al leer el archivo: {str(e)}"
 

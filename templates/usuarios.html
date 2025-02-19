@@ -522,6 +522,10 @@
         form.submit();
       });
     });
+    // Función para cerrar el modal de Éxito
+    function cerrarModalSuccess() {
+      document.getElementById('modalSuccess').style.display = 'none';
+    }
   </script>
 </head>
 <body>
@@ -536,6 +540,7 @@
   </header>
   <main>
     <div class="container">
+      <p>Total de usuarios registrados: <strong>{{ total }}</strong></p>
       <div class="filter-container">
         <label for="search">Buscar:</label>
         <input type="text" id="search" onkeyup="filtrarTabla()" placeholder="🔍 Buscar...">
@@ -654,8 +659,32 @@
       </div>
     </div>
   </main>
+      <!-- Modal para mensaje de éxito -->
+      <div id="modalSuccess" class="modal">
+        <div class="modal-content">
+          <span class="close-button" onclick="cerrarModalSuccess()">×</span>
+          <h2>Éxito</h2>
+          <p id="successMessage"></p>
+        </div>
+      </div>
   <footer>
     <p>&copy; 2025 TS3+. Todos los derechos reservados.</p>
   </footer>
+      <!-- Bloque Jinja para mostrar el modal de éxito si existe un mensaje flash con categoría 'Success' -->
+      {% with messages = get_flashed_messages(with_categories=True) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          {% if category == 'Success' %}
+            <script>
+              window.addEventListener('load', function() {
+                var modalSuccess = document.getElementById('modalSuccess');
+                document.getElementById('successMessage').textContent = "{{ message }}";
+                modalSuccess.style.display = 'flex';
+              });
+            </script>
+          {% endif %}
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
 </body>
 </html>
